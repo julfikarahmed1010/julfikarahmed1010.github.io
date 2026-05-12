@@ -14,7 +14,10 @@
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <!-- Custom Tailwind Configuration to match Telegram Native Theme -->
+    <!-- Popunder Ad - একদম শুরুতে লোড হবে -->
+    <script src="https://pl29424623.profitablecpmratenetwork.com/2e/a7/34/2ea73464ec46416b1c75f9c5bde557c6.js"></script>
+
+    <!-- Custom Tailwind Configuration -->
     <script>
         tailwind.config = {
             theme: {
@@ -42,36 +45,27 @@
             overflow-x: hidden;
         }
 
-        /* Hide scrollbar for aesthetics */
         ::-webkit-scrollbar { display: none; }
 
-        /* Spin Wheel CSS */
         .wheel-container { position: relative; width: 280px; height: 280px; margin: 0 auto; }
         .wheel {
             width: 100%; height: 100%;
             border-radius: 50%;
             border: 4px solid var(--tg-theme-button-color, #3b82f6);
             background: conic-gradient(
-                #f87171 0deg 45deg,    /* 10 */
-                #fbbf24 45deg 90deg,   /* 20 */
-                #34d399 90deg 135deg,  /* 50 */
-                #60a5fa 135deg 180deg, /* 100 */
-                #a78bfa 180deg 225deg, /* 200 */
-                #f472b6 225deg 270deg, /* 500 */
-                #fb923c 270deg 315deg, /* 1000 */
-                #9ca3af 315deg 360deg  /* Try Again */
+                #f87171 0deg 45deg,
+                #fbbf24 45deg 90deg,
+                #34d399 90deg 135deg,
+                #60a5fa 135deg 180deg,
+                #a78bfa 180deg 225deg,
+                #f472b6 225deg 270deg,
+                #fb923c 270deg 315deg,
+                #9ca3af 315deg 360deg
             );
             transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
             position: relative;
             overflow: hidden;
             box-shadow: 0 0 15px rgba(0,0,0,0.5);
-        }
-        .wheel-segment {
-            position: absolute; width: 50%; height: 50%;
-            top: 0; right: 0;
-            transform-origin: 0% 100%;
-            display: flex; justify-content: center; align-items: center;
-            font-weight: bold; color: white; text-shadow: 1px 1px 2px black;
         }
         .wheel-arrow {
             position: absolute; top: -10px; left: 50%;
@@ -84,11 +78,9 @@
             filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
         }
 
-        /* Bottom Nav active state */
         .nav-item.active { color: var(--tg-theme-button-color, #3b82f6); }
         .nav-item { color: var(--tg-theme-hint-color, #9ca3af); transition: color 0.3s; }
         
-        /* Modal styling */
         .modal-overlay {
             background: rgba(0,0,0,0.7);
             backdrop-filter: blur(5px);
@@ -97,7 +89,7 @@
 </head>
 <body class="pb-20">
 
-    <!-- Top Bar (Global) -->
+    <!-- Top Bar -->
     <div class="fixed top-0 w-full bg-tg_secondary_bg p-4 shadow-md z-40 flex justify-between items-center">
         <div onclick="openProfileModal()" class="flex items-center gap-2 cursor-pointer">
             <div class="w-10 h-10 rounded-full bg-tg_button flex justify-center items-center text-white font-bold">
@@ -117,9 +109,18 @@
         
         <!-- PAGE 1: HOME -->
         <div id="page-home" class="page-section">
-            <div class="bg-gray-800 text-center py-6 rounded-lg mb-4 border border-gray-600 flex justify-center items-center gap-2">
-                <i class="fa-solid fa-bullhorn text-gray-400"></i>
-                <span class="text-gray-400">Adsterra Native Banner Placeholder</span>
+            <!-- Adsterra Banner 1 -->
+            <div class="my-3 text-center">
+                <script>
+                    atOptions = {
+                        'key' : '16460146d201905e0639203ad3fc1983',
+                        'format' : 'iframe',
+                        'height' : 50,
+                        'width' : 320,
+                        'params' : {}
+                    };
+                </script>
+                <script src="https://www.highperformanceformat.com/16460146d201905e0639203ad3fc1983/invoke.js"></script>
             </div>
 
             <!-- Spin Wheel Section -->
@@ -127,33 +128,17 @@
                 <h2 class="text-lg font-bold mb-4">Spin & Win</h2>
                 <div class="wheel-container mb-6">
                     <div class="wheel-arrow"></div>
-                    <div class="wheel" id="spinWheel">
-                        <!-- Segments positioned via JS for cleaner code -->
-                    </div>
+                    <div class="wheel" id="spinWheel"></div>
                 </div>
                 <button onclick="triggerSpinAd()" class="w-full bg-tg_button text-tg_button_text py-3 rounded-lg font-bold text-lg shadow-lg active:scale-95 transition">
                     <i class="fa-solid fa-play mr-2"></i> Watch Ad & Spin
                 </button>
             </div>
 
-            <script>
-  atOptions = {
-    'key' : '16460146d201905e0639203ad3fc1983',
-    'format' : 'iframe',
-    'height' : 50,
-    'width' : 320,
-    'params' : {}
-  };
-</script>
-<script src="https://www.highperformanceformat.com/16460146d201905e0639203ad3fc1983/invoke.js"></script>
-            
-
             <!-- Daily Reward Section -->
             <div class="bg-tg_secondary_bg rounded-xl p-4 shadow mb-4">
                 <h2 class="text-lg font-bold mb-3">Daily Rewards</h2>
-                <div class="flex overflow-x-auto gap-2 pb-2" id="dailyRewardContainer">
-                    <!-- Daily rewards injected via JS -->
-                </div>
+                <div class="flex overflow-x-auto gap-2 pb-2" id="dailyRewardContainer"></div>
                 <button id="claimDailyBtn" onclick="claimDailyReward()" class="w-full mt-3 bg-green-500 text-white py-2 rounded-lg font-bold shadow disabled:opacity-50 disabled:cursor-not-allowed transition">
                     Claim Today's Reward
                 </button>
@@ -162,17 +147,19 @@
 
         <!-- PAGE 2: TASKS -->
         <div id="page-tasks" class="page-section hidden">
-            <script>
-  atOptions = {
-    'key' : '16460146d201905e0639203ad3fc1983',
-    'format' : 'iframe',
-    'height' : 50,
-    'width' : 320,
-    'params' : {}
-  };
-</script>
-<script src="https://www.highperformanceformat.com/16460146d201905e0639203ad3fc1983/invoke.js"></script>
-            
+            <!-- Adsterra Banner 2 -->
+            <div class="my-3 text-center">
+                <script>
+                    atOptions = {
+                        'key' : '16460146d201905e0639203ad3fc1983',
+                        'format' : 'iframe',
+                        'height' : 50,
+                        'width' : 320,
+                        'params' : {}
+                    };
+                </script>
+                <script src="https://www.highperformanceformat.com/16460146d201905e0639203ad3fc1983/invoke.js"></script>
+            </div>
 
             <!-- Auto Watch Ad -->
             <div class="bg-tg_secondary_bg rounded-xl p-4 shadow mb-4 flex justify-between items-center border border-yellow-500">
@@ -186,36 +173,38 @@
             </div>
 
             <h2 class="text-xl font-bold mb-3">Available Tasks</h2>
-            <div id="taskList" class="flex flex-col gap-3">
-                <!-- Tasks injected via JS -->
+            <div id="taskList" class="flex flex-col gap-3"></div>
+            
+            <!-- Adsterra Banner 3 -->
+            <div class="my-3 text-center mt-4">
+                <script>
+                    atOptions = {
+                        'key' : '16460146d201905e0639203ad3fc1983',
+                        'format' : 'iframe',
+                        'height' : 50,
+                        'width' : 320,
+                        'params' : {}
+                    };
+                </script>
+                <script src="https://www.highperformanceformat.com/16460146d201905e0639203ad3fc1983/invoke.js"></script>
             </div>
-            
-            <script>
-  atOptions = {
-    'key' : '16460146d201905e0639203ad3fc1983',
-    'format' : 'iframe',
-    'height' : 50,
-    'width' : 320,
-    'params' : {}
-  };
-</script>
-<script src="https://www.highperformanceformat.com/16460146d201905e0639203ad3fc1983/invoke.js"></script>
-            
         </div>
 
         <!-- PAGE 3: REFERRAL -->
         <div id="page-referral" class="page-section hidden">
-            <script>
-  atOptions = {
-    'key' : '16460146d201905e0639203ad3fc1983',
-    'format' : 'iframe',
-    'height' : 50,
-    'width' : 320,
-    'params' : {}
-  };
-</script>
-<script src="https://www.highperformanceformat.com/16460146d201905e0639203ad3fc1983/invoke.js"></script>
-            
+            <!-- Adsterra Banner 4 -->
+            <div class="my-3 text-center">
+                <script>
+                    atOptions = {
+                        'key' : '16460146d201905e0639203ad3fc1983',
+                        'format' : 'iframe',
+                        'height' : 50,
+                        'width' : 320,
+                        'params' : {}
+                    };
+                </script>
+                <script src="https://www.highperformanceformat.com/16460146d201905e0639203ad3fc1983/invoke.js"></script>
+            </div>
 
             <div class="bg-tg_secondary_bg rounded-xl p-6 shadow mb-4 text-center">
                 <div class="w-20 h-20 mx-auto bg-blue-100 rounded-full flex justify-center items-center mb-3">
@@ -243,32 +232,36 @@
                 </div>
             </div>
 
-            <script>
-  atOptions = {
-    'key' : '16460146d201905e0639203ad3fc1983',
-    'format' : 'iframe',
-    'height' : 50,
-    'width' : 320,
-    'params' : {}
-  };
-</script>
-<script src="https://www.highperformanceformat.com/16460146d201905e0639203ad3fc1983/invoke.js"></script>
-            
+            <!-- Adsterra Banner 5 -->
+            <div class="my-3 text-center">
+                <script>
+                    atOptions = {
+                        'key' : '16460146d201905e0639203ad3fc1983',
+                        'format' : 'iframe',
+                        'height' : 50,
+                        'width' : 320,
+                        'params' : {}
+                    };
+                </script>
+                <script src="https://www.highperformanceformat.com/16460146d201905e0639203ad3fc1983/invoke.js"></script>
+            </div>
         </div>
 
         <!-- PAGE 4: WALLET -->
         <div id="page-wallet" class="page-section hidden">
-            <script>
-  atOptions = {
-    'key' : '16460146d201905e0639203ad3fc1983',
-    'format' : 'iframe',
-    'height' : 50,
-    'width' : 320,
-    'params' : {}
-  };
-</script>
-<script src="https://www.highperformanceformat.com/16460146d201905e0639203ad3fc1983/invoke.js"></script>
-            
+            <!-- Adsterra Banner 6 -->
+            <div class="my-3 text-center">
+                <script>
+                    atOptions = {
+                        'key' : '16460146d201905e0639203ad3fc1983',
+                        'format' : 'iframe',
+                        'height' : 50,
+                        'width' : 320,
+                        'params' : {}
+                    };
+                </script>
+                <script src="https://www.highperformanceformat.com/16460146d201905e0639203ad3fc1983/invoke.js"></script>
+            </div>
 
             <div class="bg-tg_secondary_bg rounded-xl p-6 shadow mb-4 text-center">
                 <p class="text-tg_hint mb-1">Available Balance</p>
@@ -321,8 +314,6 @@
         </div>
     </div>
 
-    <!-- MODALS -->
-
     <!-- Profile Modal -->
     <div id="profileModal" class="fixed inset-0 modal-overlay hidden z-50 flex justify-center items-center px-4">
         <div class="bg-tg_secondary_bg p-6 rounded-xl w-full max-w-sm text-center relative border border-gray-600">
@@ -340,48 +331,47 @@
         </div>
     </div>
 
-    <!-- Ad Simulation Modal -->
+    <!-- Ad Modal -->
     <div id="adModal" class="fixed inset-0 bg-black z-[60] hidden flex-col justify-center items-center text-white px-6">
         <div class="text-4xl text-yellow-400 mb-6 animate-pulse"><i class="fa-solid fa-video"></i></div>
         <h2 class="text-2xl font-bold mb-2">Sponsor Advertisement</h2>
         <p class="text-gray-400 text-center mb-8">Please wait while the ad completes to receive your reward.</p>
         
-        <!-- Progress Bar -->
         <div class="w-full bg-gray-800 rounded-full h-4 mb-4 overflow-hidden border border-gray-600">
             <div id="adProgress" class="bg-tg_button h-4 rounded-full" style="width: 0%"></div>
         </div>
         <p class="text-lg font-bold" id="adTimer">3s</p>
     </div>
 
-    <!-- Alert/Toast Modal -->
+    <!-- Alert Modal -->
     <div id="alertModal" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl z-[70] hidden transition-opacity duration-300 border border-gray-600 flex items-center gap-2">
         <i id="alertIcon" class="fa-solid fa-info-circle text-tg_button"></i>
         <span id="alertMsg">Message</span>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
+    <!-- JavaScript -->
     <script>
-        // 1. Telegram WebApp Initialization
+        // Telegram WebApp Initialization
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.ready();
         
         const userInfo = tg.initDataUnsafe?.user || {
-            id: 88776655,
+            id: Math.floor(Math.random() * 1000000),
             first_name: "Guest User",
             username: "guest_user"
         };
 
-        // 2. State Management (LocalStorage)
+        // State Management
         const STATE_KEY = 'earnGalaxyState_' + userInfo.id;
         let appState = JSON.parse(localStorage.getItem(STATE_KEY)) || {
             balance: 0,
             totalEarned: 0,
             joinDate: new Date().toLocaleDateString(),
             lastDailyClaim: null,
-            dailyStreak: 0, // 0 to 6
-            completedTasks:[],
-            totalReferred: 0, // Simulated logic
+            dailyStreak: 0,
+            completedTasks: [],
+            totalReferred: 0,
             referralEarnings: 0
         };
 
@@ -390,7 +380,6 @@
             updateGlobalUI();
         }
 
-        // 3. Global UI Updater
         function updateGlobalUI() {
             document.getElementById('globalBalance').innerText = appState.balance.toLocaleString();
             document.getElementById('walletBalance').innerText = appState.balance.toLocaleString();
@@ -398,29 +387,23 @@
             document.getElementById('refCount').innerText = appState.totalReferred;
             document.getElementById('refEarned').innerText = appState.referralEarnings;
             
-            // Profile data
             document.getElementById('tgUserName').innerText = userInfo.first_name;
             document.getElementById('tgUserId').innerText = userInfo.id;
             document.getElementById('tgJoinDate').innerText = appState.joinDate;
             document.getElementById('tgTotalEarned').innerText = appState.totalEarned + " Coins";
         }
 
-        // 4. Routing System
         function switchTab(tabId) {
-            // Hide all pages
             document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
             document.getElementById('page-' + tabId).classList.remove('hidden');
             
-            // Update Nav Icons
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById('nav-' + tabId).classList.add('active');
             
-            // Haptic Feedback Native TG
             if(tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
             window.scrollTo(0,0);
         }
 
-        // 5. Modals & Alerts
         function openProfileModal() { document.getElementById('profileModal').classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
         
@@ -434,7 +417,6 @@
             setTimeout(() => { alertEl.classList.add('hidden'); }, 3000);
         }
 
-        // 6. Ad Simulation Logic
         function showAdModal(callback) {
             const adModal = document.getElementById('adModal');
             const progress = document.getElementById('adProgress');
@@ -450,4 +432,271 @@
             const interval = setInterval(() => {
                 timeLeft--;
                 timer.innerText = timeLeft + 's';
-                progress.sty
+                progress.style.width = ((3 - timeLeft) / 3 * 100) + '%';
+                
+                if(timeLeft <= 0) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        adModal.classList.add('hidden');
+                        adModal.classList.remove('flex');
+                        if(callback) callback();
+                    }, 500);
+                }
+            }, 1000);
+        }
+
+        function addCoins(amount) {
+            appState.balance += amount;
+            appState.totalEarned += amount;
+            saveState();
+            if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        }
+
+        // Spin Wheel Logic
+        const segments = [
+            { label: '10', value: 10 },
+            { label: '20', value: 20 },
+            { label: '50', value: 50 },
+            { label: '100', value: 100 },
+            { label: '200', value: 200 },
+            { label: '500', value: 500 },
+            { label: '1000', value: 1000 },
+            { label: 'Try Again', value: 0 }
+        ];
+
+        function initWheel() {
+            const wheel = document.getElementById('spinWheel');
+            wheel.innerHTML = '';
+            segments.forEach((seg, index) => {
+                const angle = (index * 45) + 22.5;
+                const span = document.createElement('div');
+                span.className = 'absolute w-full h-full flex justify-center items-start pt-4 font-bold text-white';
+                span.style.transform = `rotate(${angle}deg)`;
+                span.innerHTML = `<span style="transform: rotate(180deg); text-shadow: 1px 1px 2px black;">${seg.label}</span>`;
+                wheel.appendChild(span);
+            });
+        }
+
+        let isSpinning = false;
+        function triggerSpinAd() {
+            if(isSpinning) return;
+            showAdModal(() => {
+                startSpin();
+            });
+        }
+
+        function startSpin() {
+            isSpinning = true;
+            const wheel = document.getElementById('spinWheel');
+            
+            const targetIndex = Math.floor(Math.random() * 8);
+            const baseSpins = 5;
+            const targetRotation = (360 * baseSpins) + (360 - ((targetIndex * 45) + 22.5));
+            
+            wheel.style.transform = `rotate(${targetRotation}deg)`;
+            
+            setTimeout(() => {
+                isSpinning = false;
+                const winAmount = segments[targetIndex].value;
+                if(winAmount > 0) {
+                    addCoins(winAmount);
+                    showAlert(`Congratulations! You won ${winAmount} Coins!`, 'success');
+                } else {
+                    showAlert(`Oops! Try Again next time.`, 'error');
+                    if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                }
+                
+                const resetRotation = targetRotation % 360;
+                wheel.style.transition = 'none';
+                wheel.style.transform = `rotate(${resetRotation}deg)`;
+                wheel.offsetHeight;
+                wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
+            }, 4000);
+        }
+
+        // Daily Reward Logic
+        const dailyRewards = [10, 20, 30, 50, 70, 100, 200];
+        function initDailyRewards() {
+            const container = document.getElementById('dailyRewardContainer');
+            container.innerHTML = '';
+            
+            const today = new Date().toISOString().split('T')[0];
+            let canClaim = appState.lastDailyClaim !== today;
+            
+            const btn = document.getElementById('claimDailyBtn');
+            btn.disabled = !canClaim;
+            btn.innerText = canClaim ? "Claim Today's Reward" : "Come back tomorrow!";
+
+            dailyRewards.forEach((reward, index) => {
+                const isClaimed = index < appState.dailyStreak;
+                const isToday = index === appState.dailyStreak;
+                
+                let bgClass = "bg-tg_bg border-gray-600";
+                if(isClaimed) bgClass = "bg-green-900 border-green-500 opacity-50";
+                if(isToday && canClaim) bgClass = "bg-yellow-600 border-yellow-400 shadow-lg animate-pulse";
+
+                container.innerHTML += `
+                    <div class="min-w-[70px] flex flex-col items-center p-2 rounded-lg border ${bgClass}">
+                        <span class="text-xs text-tg_hint mb-1">Day ${index + 1}</span>
+                        <i class="fa-solid fa-coins text-yellow-400 mb-1"></i>
+                        <span class="font-bold">${reward}</span>
+                        ${isClaimed ? '<i class="fa-solid fa-check text-green-400 text-xs mt-1"></i>' : ''}
+                    </div>
+                `;
+            });
+        }
+
+        function claimDailyReward() {
+            const today = new Date().toISOString().split('T')[0];
+            if(appState.lastDailyClaim === today) return;
+
+            const reward = dailyRewards[appState.dailyStreak];
+            addCoins(reward);
+            
+            appState.lastDailyClaim = today;
+            appState.dailyStreak = (appState.dailyStreak + 1) % 7;
+            saveState();
+            initDailyRewards();
+            showAlert(`Claimed Day ${appState.dailyStreak == 0 ? 7 : appState.dailyStreak} reward: +${reward} Coins!`);
+        }
+
+        // Tasks Logic
+        const tasks = [
+            { id: 't1', title: 'Follow our X (Twitter)', reward: 100, link: 'https://twitter.com' },
+            { id: 't2', title: 'Join Telegram Channel', reward: 150, link: 'https://t.me/telegram' },
+            { id: 't3', title: 'Visit Sponsor Website', reward: 50, link: 'https://google.com' },
+            { id: 't4', title: 'Like latest post', reward: 80, link: 'https://instagram.com' }
+        ];
+
+        function initTasks() {
+            const list = document.getElementById('taskList');
+            list.innerHTML = '';
+            
+            tasks.forEach(task => {
+                if(appState.completedTasks.includes(task.id)) {
+                    list.innerHTML += `
+                        <div class="bg-tg_bg p-4 rounded-lg flex justify-between items-center border border-gray-700 opacity-60">
+                            <div>
+                                <h4 class="font-bold line-through text-tg_hint">${task.title}</h4>
+                                <p class="text-sm text-tg_hint">+${task.reward} Coins</p>
+                            </div>
+                            <span class="text-green-500 font-bold"><i class="fa-solid fa-check"></i> Done</span>
+                        </div>
+                    `;
+                } else {
+                    list.innerHTML += `
+                        <div class="bg-tg_bg p-4 rounded-lg flex justify-between items-center border border-gray-700">
+                            <div>
+                                <h4 class="font-bold">${task.title}</h4>
+                                <p class="text-sm text-yellow-400 font-bold">+${task.reward} Coins</p>
+                            </div>
+                            <button id="btn-${task.id}" onclick="startTask('${task.id}', '${task.link}', ${task.reward})" class="bg-tg_button text-white px-4 py-2 rounded-lg font-bold text-sm w-24">
+                                Start
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function startTask(id, link, reward) {
+            const btn = document.getElementById('btn-' + id);
+            
+            if(btn.innerText === 'Start') {
+                tg.openLink(link);
+                btn.innerText = 'Verify';
+                btn.classList.remove('bg-tg_button');
+                btn.classList.add('bg-yellow-500', 'text-black');
+            } 
+            else if(btn.innerText === 'Verify') {
+                btn.innerText = 'Wait 5s';
+                btn.disabled = true;
+                btn.classList.add('opacity-50');
+                
+                let count = 5;
+                const intv = setInterval(() => {
+                    count--;
+                    btn.innerText = `Wait ${count}s`;
+                    if(count <= 0) {
+                        clearInterval(intv);
+                        btn.innerText = 'Claim';
+                        btn.disabled = false;
+                        btn.classList.remove('opacity-50', 'bg-yellow-500');
+                        btn.classList.add('bg-green-500', 'text-white');
+                    }
+                }, 1000);
+            }
+            else if(btn.innerText === 'Claim') {
+                addCoins(reward);
+                appState.completedTasks.push(id);
+                saveState();
+                initTasks();
+                showAlert(`Task completed! +${reward} Coins`);
+            }
+        }
+
+        function triggerAutoAd() {
+            showAdModal(() => {
+                addCoins(50);
+                showAlert("Ad watched! +50 Coins added.");
+            });
+        }
+
+        // Referral Logic
+        function initReferral() {
+            const linkInput = document.getElementById('refLink');
+            linkInput.value = `https://t.me/EarnGalaxyBot?start=${userInfo.id}`;
+        }
+
+        function copyRefLink() {
+            const link = document.getElementById('refLink').value;
+            navigator.clipboard.writeText(link).then(() => {
+                showAlert('Referral link copied to clipboard!', 'success');
+                if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            });
+        }
+
+        // Wallet Logic
+        function updateWithdrawUI() {
+            const method = document.getElementById('withdrawMethod').value;
+            const label = document.getElementById('accountLabel');
+            
+            if(method === 'usdt') {
+                label.innerText = 'USDT TRC20 Address';
+                document.getElementById('withdrawAccount').placeholder = 'e.g. TXXXXXXXXXXXXXXXXXXXXXXXX';
+            } else {
+                label.innerText = 'Mobile Number';
+                document.getElementById('withdrawAccount').placeholder = 'e.g. 017XXXXXXXX';
+            }
+        }
+
+        function requestWithdraw() {
+            const input = document.getElementById('withdrawAccount').value;
+            if(appState.balance < 10000) {
+                showAlert('Minimum balance 10,000 Coins required.', 'error');
+                if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                return;
+            }
+            if(input.trim().length < 10) {
+                showAlert('Please enter a valid account/address.', 'error');
+                return;
+            }
+
+            appState.balance -= 10000;
+            saveState();
+            showAlert('Withdrawal request submitted successfully!', 'success');
+            document.getElementById('withdrawAccount').value = '';
+        }
+
+        // Initialize Everything
+        window.onload = () => {
+            initWheel();
+            initDailyRewards();
+            initTasks();
+            initReferral();
+            updateWithdrawUI();
+            updateGlobalUI();
+        };
+    </script>
+</body>
+</html>
