@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Earn Galaxy - Telegram Mini App</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Custom Tailwind Configuration to match Telegram Native Theme -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tg_bg: 'var(--tg-theme-bg-color, #1f2937)',
+                        tg_text: 'var(--tg-theme-text-color, #ffffff)',
+                        tg_hint: 'var(--tg-theme-hint-color, #9ca3af)',
+                        tg_link: 'var(--tg-theme-link-color, #3b82f6)',
+                        tg_button: 'var(--tg-theme-button-color, #3b82f6)',
+                        tg_button_text: 'var(--tg-theme-button-text-color, #ffffff)',
+                        tg_secondary_bg: 'var(--tg-theme-secondary-bg-color, #374151)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: var(--tg-theme-bg-color, #111827);
+            color: var(--tg-theme-text-color, #ffffff);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        /* Hide scrollbar for aesthetics */
+        ::-webkit-scrollbar { display: none; }
+
+        /* Spin Wheel CSS */
+        .wheel-container { position: relative; width: 280px; height: 280px; margin: 0 auto; }
+        .wheel {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            border: 4px solid var(--tg-theme-button-color, #3b82f6);
+            background: conic-gradient(
+                #f87171 0deg 45deg,    /* 10 */
+                #fbbf24 45deg 90deg,   /* 20 */
+                #34d399 90deg 135deg,  /* 50 */
+                #60a5fa 135deg 180deg, /* 100 */
+                #a78bfa 180deg 225deg, /* 200 */
+                #f472b6 225deg 270deg, /* 500 */
+                #fb923c 270deg 315deg, /* 1000 */
+                #9ca3af 315deg 360deg  /* Try Again */
+            );
+            transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+        .wheel-segment {
+            position: absolute; width: 50%; height: 50%;
+            top: 0; right: 0;
+            transform-origin: 0% 100%;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; color: white; text-shadow: 1px 1px 2px black;
+        }
+        .wheel-arrow {
+            position: absolute; top: -10px; left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 25px solid white;
+            z-index: 10;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+        }
+
+        /* Bottom Nav active state */
+        .nav-item.active { color: var(--tg-theme-button-color, #3b82f6); }
+        .nav-item { color: var(--tg-theme-hint-color, #9ca3af); transition: color 0.3s; }
+        
+        /* Modal styling */
+        .modal-overlay {
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body class="pb-20">
+
+    <!-- Top Bar (Global) -->
+    <div class="fixed top-0 w-full bg-tg_secondary_bg p-4 shadow-md z-40 flex justify-between items-center">
+        <div onclick="openProfileModal()" class="flex items-center gap-2 cursor-pointer">
+            <div class="w-10 h-10 rounded-full bg-tg_button flex justify-center items-center text-white font-bold">
+                <i class="fa-solid fa-user"></i>
+            </div>
+        </div>
+        <div class="text-xl font-bold text-yellow-400">
+            <i class="fa-solid fa-coins mr-1"></i> <span id="globalBalance">0</span>
+        </div>
+        <div onclick="switchTab('wallet')" class="text-tg_button text-2xl cursor-pointer">
+            <i class="fa-solid fa-wallet"></i>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="pt-20 px-4 max-w-lg mx-auto">
+        
+        <!-- PAGE 1: HOME -->
+        <div id="page-home" class="page-section">
+            <div class="bg-gray-800 text-center py-6 rounded-lg mb-4 border border-gray-600 flex justify-center items-center gap-2">
+                <i class="fa-solid fa-bullhorn text-gray-400"></i>
+                <span class="text-gray-400">Adsterra Native Banner Placeholder</span>
+            </div>
+
+            <!-- Spin Wheel Section -->
+            <div class="bg-tg_secondary_bg rounded-xl p-4 text-center mb-4 shadow">
+                <h2 class="text-lg font-bold mb-4">Spin & Win</h2>
+                <div class="wheel-container mb-6">
+                    <div class="wheel-arrow"></div>
+                    <div class="wheel" id="spinWheel">
+                        <!-- Segments positioned via JS for cleaner code -->
+                    </div>
+                </div>
+                <button onclick="triggerSpinAd()" class="w-full bg-tg_button text-tg_button_text py-3 rounded-lg font-bold text-lg shadow-lg active:scale-95 transition">
+                    <i class="fa-solid fa-play mr-2"></i> Watch Ad & Spin
+                </button>
+            </div>
+
+            <div class="bg-gray-800 text-center py-6 rounded-lg mb-4 border border-gray-600 flex justify-center items-center gap-2">
+                <i class="fa-solid fa-bullhorn text-gray-400"></i>
+                <span class="text-gray-400">Adsterra Native Banner Placeholder</span>
+            </div>
+
+            <!-- Daily Reward Section -->
+            <div class="bg-tg_secondary_bg rounded-xl p-4 shadow mb-4">
+                <h2 class="text-lg font-bold mb-3">Daily Rewards</h2>
+                <div class="flex overflow-x-auto gap-2 pb-2" id="dailyRewardContainer">
+                    <!-- Daily rewards injected via JS -->
+                </div>
+                <button id="claimDailyBtn" onclick="claimDailyReward()" class="w-full mt-3 bg-green-500 text-white py-2 rounded-lg font-bold shadow disabled:opacity-50 disabled:cursor-not-allowed transition">
+                    Claim Today's Reward
+                </button>
+            </div>
+        </div>
+
+        <!-- PAGE 2: TASKS -->
+        <div id="page-tasks" class="page-section hidden">
+            <div class="bg-gray-800 text-center py-6 rounded-lg mb-4 border border-gray-600 flex justify-center items-center gap-2">
+                <i class="fa-solid fa-bullhorn text-gray-400"></i>
+                <span class="text-gray-400">Adsterra Native Banner</span>
+            </div>
+
+            <!-- Auto Watch Ad -->
+            <div class="bg-tg_secondary_bg rounded-xl p-4 shadow mb-4 flex justify-between items-center border border-yellow-500">
+                <div>
+                    <h3 class="font-bold text-lg">Auto Watch Ad</h3>
+                    <p class="text-sm text-tg_hint">Watch a 3s ad to earn coins</p>
+                </div>
+                <button onclick="triggerAutoAd()" class="bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold">
+                    +50 <i class="fa-solid fa-coins"></i>
+                </button>
+            </div>
+
+            <h2 class="text-xl font-bold mb-3">Available Tasks</h2>
+            <div id="taskList" class="flex flex-col gap-3">
+                <!-- Tasks injected via JS -->
+            </div>
+            
+            <div class="bg-gray-800 text-center py-6 rounded-lg mt-4 border border-gray-600 flex justify-center items-center gap-2">
+                <span class="text-gray-400">Adsterra Native Banner</span>
+            </div>
+        </div>
+
+        <!-- PAGE 3: REFERRAL -->
+        <div id="page-referral" class="page-section hidden">
+            <div class="bg-gray-800 text-center py-6 rounded-lg mb-4 border border-gray-600">
+                <span class="text-gray-400">Adsterra Native Banner</span>
+            </div>
+
+            <div class="bg-tg_secondary_bg rounded-xl p-6 shadow mb-4 text-center">
+                <div class="w-20 h-20 mx-auto bg-blue-100 rounded-full flex justify-center items-center mb-3">
+                    <i class="fa-solid fa-users text-4xl text-blue-500"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-1">Invite Friends!</h2>
+                <p class="text-sm text-tg_hint mb-6">Earn 500 Coins for every friend who completes their first task or spin.</p>
+                
+                <div class="flex justify-around bg-tg_bg p-4 rounded-lg mb-6 shadow-inner">
+                    <div>
+                        <p class="text-sm text-tg_hint">Total Referred</p>
+                        <p class="text-xl font-bold" id="refCount">0</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-tg_hint">Earned</p>
+                        <p class="text-xl font-bold text-yellow-400" id="refEarned">0</p>
+                    </div>
+                </div>
+
+                <div class="relative">
+                    <input type="text" id="refLink" readonly class="w-full bg-tg_bg border border-gray-600 p-3 rounded-lg text-sm pr-20 text-tg_text focus:outline-none">
+                    <button onclick="copyRefLink()" class="absolute right-1 top-1 bottom-1 bg-tg_button text-white px-4 rounded-md font-bold text-sm">
+                        Copy
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 text-center py-6 rounded-lg mb-4 border border-gray-600">
+                <span class="text-gray-400">Adsterra Native Banner</span>
+            </div>
+        </div>
+
+        <!-- PAGE 4: WALLET -->
+        <div id="page-wallet" class="page-section hidden">
+            <div class="bg-gray-800 text-center py-6 rounded-lg mb-4 border border-gray-600">
+                <span class="text-gray-400">Adsterra Native Banner</span>
+            </div>
+
+            <div class="bg-tg_secondary_bg rounded-xl p-6 shadow mb-4 text-center">
+                <p class="text-tg_hint mb-1">Available Balance</p>
+                <h1 class="text-4xl font-bold text-yellow-400 mb-2"><i class="fa-solid fa-coins"></i> <span id="walletBalance">0</span></h1>
+                <p class="text-sm bg-tg_bg inline-block px-3 py-1 rounded-full border border-gray-600">
+                    <i class="fa-solid fa-exchange-alt mr-1"></i> ≈ <span id="fiatValue">0</span> BDT
+                </p>
+                <p class="text-xs text-tg_hint mt-2">Rate: 100 Coins = 1 BDT</p>
+            </div>
+
+            <div class="bg-tg_secondary_bg rounded-xl p-5 shadow">
+                <h2 class="text-lg font-bold mb-4 border-b border-gray-600 pb-2">Withdraw Funds</h2>
+                
+                <label class="block text-sm text-tg_hint mb-1">Select Method</label>
+                <select id="withdrawMethod" onchange="updateWithdrawUI()" class="w-full bg-tg_bg border border-gray-600 rounded-lg p-3 mb-4 text-tg_text focus:outline-none">
+                    <option value="bkash">bKash (BDT)</option>
+                    <option value="nagad">Nagad (BDT)</option>
+                    <option value="usdt">USDT TRC20 (Crypto)</option>
+                </select>
+
+                <label class="block text-sm text-tg_hint mb-1" id="accountLabel">Mobile Number</label>
+                <input type="text" id="withdrawAccount" placeholder="e.g. 017XXXXXXXX" class="w-full bg-tg_bg border border-gray-600 rounded-lg p-3 mb-4 text-tg_text focus:outline-none">
+
+                <div class="flex justify-between items-center mb-4 text-sm">
+                    <span class="text-tg_hint">Minimum Withdrawal:</span>
+                    <span class="font-bold text-red-400">10,000 Coins</span>
+                </div>
+
+                <button onclick="requestWithdraw()" class="w-full bg-tg_button text-white py-3 rounded-lg font-bold shadow-lg transition active:scale-95">
+                    Submit Request
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- BOTTOM NAVIGATION -->
+    <div class="fixed bottom-0 w-full bg-tg_secondary_bg border-t border-gray-700 flex justify-around items-center py-3 pb-5 z-40">
+        <div onclick="switchTab('home')" class="nav-item active text-center cursor-pointer w-1/4" id="nav-home">
+            <i class="fa-solid fa-house text-xl mb-1"></i><p class="text-xs">Home</p>
+        </div>
+        <div onclick="switchTab('tasks')" class="nav-item text-center cursor-pointer w-1/4" id="nav-tasks">
+            <i class="fa-solid fa-list-check text-xl mb-1"></i><p class="text-xs">Tasks</p>
+        </div>
+        <div onclick="switchTab('referral')" class="nav-item text-center cursor-pointer w-1/4" id="nav-referral">
+            <i class="fa-solid fa-user-plus text-xl mb-1"></i><p class="text-xs">Referral</p>
+        </div>
+        <div onclick="switchTab('wallet')" class="nav-item text-center cursor-pointer w-1/4" id="nav-wallet">
+            <i class="fa-solid fa-wallet text-xl mb-1"></i><p class="text-xs">Wallet</p>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="fixed inset-0 modal-overlay hidden z-50 flex justify-center items-center px-4">
+        <div class="bg-tg_secondary_bg p-6 rounded-xl w-full max-w-sm text-center relative border border-gray-600">
+            <button onclick="closeModal('profileModal')" class="absolute top-3 right-4 text-gray-400 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
+            <div class="w-16 h-16 mx-auto rounded-full bg-tg_button flex justify-center items-center text-white text-2xl font-bold mb-3 shadow-lg">
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <h2 class="text-xl font-bold mb-1" id="tgUserName">User Name</h2>
+            <p class="text-tg_hint text-sm mb-4">ID: <span id="tgUserId">12345678</span></p>
+            
+            <div class="bg-tg_bg p-3 rounded-lg mb-4 text-left">
+                <p class="text-sm text-tg_hint">Joined: <span class="text-white float-right" id="tgJoinDate">Today</span></p>
+                <p class="text-sm text-tg_hint mt-2">Total Earned: <span class="text-yellow-400 float-right font-bold" id="tgTotalEarned">0 Coins</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ad Simulation Modal -->
+    <div id="adModal" class="fixed inset-0 bg-black z-[60] hidden flex-col justify-center items-center text-white px-6">
+        <div class="text-4xl text-yellow-400 mb-6 animate-pulse"><i class="fa-solid fa-video"></i></div>
+        <h2 class="text-2xl font-bold mb-2">Sponsor Advertisement</h2>
+        <p class="text-gray-400 text-center mb-8">Please wait while the ad completes to receive your reward.</p>
+        
+        <!-- Progress Bar -->
+        <div class="w-full bg-gray-800 rounded-full h-4 mb-4 overflow-hidden border border-gray-600">
+            <div id="adProgress" class="bg-tg_button h-4 rounded-full" style="width: 0%"></div>
+        </div>
+        <p class="text-lg font-bold" id="adTimer">3s</p>
+    </div>
+
+    <!-- Alert/Toast Modal -->
+    <div id="alertModal" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl z-[70] hidden transition-opacity duration-300 border border-gray-600 flex items-center gap-2">
+        <i id="alertIcon" class="fa-solid fa-info-circle text-tg_button"></i>
+        <span id="alertMsg">Message</span>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // 1. Telegram WebApp Initialization
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+        
+        const userInfo = tg.initDataUnsafe?.user || {
+            id: 88776655,
+            first_name: "Guest User",
+            username: "guest_user"
+        };
+
+        // 2. State Management (LocalStorage)
+        const STATE_KEY = 'earnGalaxyState_' + userInfo.id;
+        let appState = JSON.parse(localStorage.getItem(STATE_KEY)) || {
+            balance: 0,
+            totalEarned: 0,
+            joinDate: new Date().toLocaleDateString(),
+            lastDailyClaim: null,
+            dailyStreak: 0, // 0 to 6
+            completedTasks:[],
+            totalReferred: 0, // Simulated logic
+            referralEarnings: 0
+        };
+
+        function saveState() {
+            localStorage.setItem(STATE_KEY, JSON.stringify(appState));
+            updateGlobalUI();
+        }
+
+        // 3. Global UI Updater
+        function updateGlobalUI() {
+            document.getElementById('globalBalance').innerText = appState.balance.toLocaleString();
+            document.getElementById('walletBalance').innerText = appState.balance.toLocaleString();
+            document.getElementById('fiatValue').innerText = (appState.balance / 100).toFixed(2);
+            document.getElementById('refCount').innerText = appState.totalReferred;
+            document.getElementById('refEarned').innerText = appState.referralEarnings;
+            
+            // Profile data
+            document.getElementById('tgUserName').innerText = userInfo.first_name;
+            document.getElementById('tgUserId').innerText = userInfo.id;
+            document.getElementById('tgJoinDate').innerText = appState.joinDate;
+            document.getElementById('tgTotalEarned').innerText = appState.totalEarned + " Coins";
+        }
+
+        // 4. Routing System
+        function switchTab(tabId) {
+            // Hide all pages
+            document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById('page-' + tabId).classList.remove('hidden');
+            
+            // Update Nav Icons
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('nav-' + tabId).classList.add('active');
+            
+            // Haptic Feedback Native TG
+            if(tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
+            window.scrollTo(0,0);
+        }
+
+        // 5. Modals & Alerts
+        function openProfileModal() { document.getElementById('profileModal').classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        
+        function showAlert(msg, type='success') {
+            const alertEl = document.getElementById('alertModal');
+            document.getElementById('alertMsg').innerText = msg;
+            const icon = document.getElementById('alertIcon');
+            icon.className = type === 'success' ? 'fa-solid fa-check-circle text-green-400' : 'fa-solid fa-times-circle text-red-400';
+            
+            alertEl.classList.remove('hidden');
+            setTimeout(() => { alertEl.classList.add('hidden'); }, 3000);
+        }
+
+        // 6. Ad Simulation Logic
+        function showAdModal(callback) {
+            const adModal = document.getElementById('adModal');
+            const progress = document.getElementById('adProgress');
+            const timer = document.getElementById('adTimer');
+            
+            adModal.classList.remove('hidden');
+            adModal.classList.add('flex');
+            progress.style.width = '0%';
+            
+            let timeLeft = 3;
+            timer.innerText = timeLeft + 's';
+            
+            const interval = setInterval(() => {
+                timeLeft--;
+                timer.innerText = timeLeft + 's';
+                progress.sty
