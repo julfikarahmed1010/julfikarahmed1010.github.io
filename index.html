@@ -44,13 +44,15 @@
 <script>
 function showAd(){
 
-  var s = document.createElement("script");
+  var script = document.createElement('script');
 
-  s.dataset.zone = "11009740";
+  script.src = "https://5gvci.com/act/files/tag.min.js?z=11009758";
 
-  s.src = "https://al5sm.com/tag.min.js";
+  script.setAttribute("data-cfasync", "false");
 
-  document.body.appendChild(s);
+  script.async = true;
+
+  document.body.appendChild(script);
 
 }
 </script>
