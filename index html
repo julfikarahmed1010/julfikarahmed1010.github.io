@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Free Earn - Telegram Mini App</title>
+    
+    <!-- TailwindCSS for Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Custom Styles & Animations */
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow-x: hidden;
+            padding-bottom: 80px; /* Space for bottom nav */
+        }
+        
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .gradient-text {
+            background: linear-gradient(to right, #3b82f6, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .spin-wheel-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 0 auto;
+        }
+
+        .wheel-canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+        }
+
+        .wheel-pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; 
+            height: 0; 
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid #ef4444;
+            z-index: 10;
+            filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.5));
+        }
+
+        /* Hide scrollbar */
+        ::-webkit-scrollbar { width: 0px; }
+        
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Adsterra Placeholder Styling */
+        .ad-banner {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 15px 0;
+            overflow: hidden;
+            background: #1e293b;
+            border-radius: 8px;
+            border: 1px dashed #475569;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Bar -->
+    <header class="fixed top-0 left-0 w-full glass-panel z-40 px-4 py-3 flex justify-between items-center shadow-lg">
+        <button id="btn-profile" class="flex items-center space-x-2 text-white focus:outline-none">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex justify-center items-center font-bold text-lg shadow-lg">
+                <i class="fa-solid fa-user"></i>
+            </div>
+        </button>
+        
+        <div class="flex flex-col items-center">
+            <span class="text-xs text-gray-400">Balance</span>
+            <div class="font-bold text-xl text-yellow-400 flex items-center gap-1">
+                <i class="fa-solid fa-coins"></i> <span id="top-balance">0</span>
+            </div>
+        </div>
+        
+        <button onclick="switchTab('wallet')" class="text-2xl text-blue-400 focus:outline-none">
+            <i class="fa-solid fa-wallet"></i>
+        </button>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="pt-20 px-4">
+
+        <!-- ================= PAGE 1: HOME ================= -->
+        <section id="home" class="tab-content active space-y-6">
+            
+            <!-- Adsterra Native Banner-1 (Top) -->
+            <div class="ad-banner min-h-[90px]">
+                <script>
+                  atOptions = { 'key' : 'fc1f5eaa03bb67a743c0e612bcf0397a', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+                </script>
+                <script src="https://www.highperformanceformat.com/fc1f5eaa03bb67a743c0e612bcf0397a/invoke.js"></script>
+            </div>
+
+            <!-- Manual Spin Wheel -->
+            <div class="glass-panel rounded-2xl p-4 text-center">
+                <h2 class="text-xl font-bold mb-2 gradient-text">Lucky Spin Wheel</h2>
+                <p class="text-xs text-gray-400 mb-4">First spin is free! Next spins require watching an ad.</p>
+                <div class="spin-wheel-container">
+                    <div class="wheel-pointer"></div>
+                    <canvas id="wheel-manual" class="wheel-canvas" width="280" height="280"></canvas>
+                </div>
+                <div class="mt-6">
+                    <button id="btn-spin-manual" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 font-bold py-3 rounded-xl shadow-lg transform transition hover:scale-105">
+                        SPIN NOW (<span id="manual-spin-status">Free</span>)
+                    </button>
+                    <p class="text-xs text-gray-400 mt-2">Spins left: <span id="manual-spin-count">21</span>/21 (Resets in 4h)</p>
+                </div>
+            </div>
+
+            <!-- Adsterra Native Banner-1 (Middle) -->
+            <div class="ad-banner min-h-[90px]">
+                <script>
+                  atOptions = { 'key' : 'fc1f5eaa03bb67a743c0e612bcf0397a', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+                </script>
+                <script src="https://www.highperformanceformat.com/fc1f5eaa03bb67a743c0e612bcf0397a/invoke.js"></script>
+            </div>
+
+            <!-- Daily Reward -->
+            <div class="glass-panel rounded-2xl p-4">
+                <h2 class="text-lg font-bold mb-3"><i class="fa-solid fa-gift text-pink-500"></i> Daily Rewards</h2>
+                <div class="grid grid-cols-4 gap-2 mb-4" id="daily-reward-grid">
+                    <!-- Injected via JS -->
+                </div>
+                <button id="btn-claim-daily" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 font-bold py-3 rounded-xl shadow-lg">
+                    Claim Daily Reward
+                </button>
+            </div>
+
+            <!-- Auto Spin Wheel -->
+            <div class="glass-panel rounded-2xl p-4 text-center border-t-4 border-purple-500">
+                <h2 class="text-xl font-bold mb-2 text-purple-400"><i class="fa-solid fa-rotate text-white"></i> Auto Spin Wheel</h2>
+                <p class="text-xs text-gray-400 mb-4">Plays continuously. Requires 2 ads (15s+15s) per spin.</p>
+                <div class="spin-wheel-container">
+                    <div class="wheel-pointer"></div>
+                    <canvas id="wheel-auto" class="wheel-canvas" width="280" height="280"></canvas>
+                </div>
+                <div class="mt-6 flex gap-2">
+                    <button id="btn-spin-auto" class="flex-1 bg-gradient-to-r from-purple-500 to-pink-600 font-bold py-3 rounded-xl shadow-lg">
+                        START AUTO SPIN
+                    </button>
+                    <button id="btn-stop-auto" class="hidden flex-1 bg-red-600 font-bold py-3 rounded-xl shadow-lg">
+                        STOP
+                    </button>
+                </div>
+                <p class="text-xs text-gray-400 mt-2">Auto Spins left: <span id="auto-spin-count">21</span>/21</p>
+            </div>
+
+            <!-- Adsterra Native Banner-2 (Bottom) -->
+            <div class="ad-banner min-h-[250px]">
+                <script>
+                  atOptions = { 'key' : 'b301e9e298a7004777ddcb58245aa4fa', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
+                </script>
+                <script src="https://www.highperformanceformat.com/b301e9e298a7004777ddcb58245aa4fa/invoke.js"></script>
+            </div>
+            
+        </section>
+
+        <!-- ================= PAGE 2: TASKS ================= -->
+        <section id="tasks" class="tab-content space-y-4">
+            <h1 class="text-2xl font-bold gradient-text text-center mb-4">Earn More Coins</h1>
+            
+            <!-- Adsterra Native Banner-1 (Top) -->
+            <div class="ad-banner min-h-[90px]">
+                <script>
+                  atOptions = { 'key' : 'fc1f5eaa03bb67a743c0e612bcf0397a', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+                </script>
+                <script src="https://www.highperformanceformat.com/fc1f5eaa03bb67a743c0e612bcf0397a/invoke.js"></script>
+            </div>
+
+            <div class="flex justify-between items-center bg-gray-800 p-2 rounded-lg text-sm">
+                <span>Tasks Left: <span id="task-limit-count" class="font-bold text-blue-400">20</span>/20</span>
+                <span class="text-xs text-gray-400">(Resets in 4h)</span>
+            </div>
+
+            <div id="task-list" class="space-y-3">
+                <!-- Task Items injected by JS -->
+            </div>
+
+            <!-- Adsterra Native Banner-2 (Bottom) -->
+            <div class="ad-banner min-h-[250px] mt-6">
+                <script>
+                  atOptions = { 'key' : 'b301e9e298a7004777ddcb58245aa4fa', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
+                </script>
+                <script src="https://www.highperformanceformat.com/b301e9e298a7004777ddcb58245aa4fa/invoke.js"></script>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 3: REFERRAL ================= -->
+        <section id="referral" class="tab-content space-y-4">
+            <!-- Adsterra Native Banner-1 (Top) -->
+            <div class="ad-banner min-h-[90px]">
+                <script>
+                  atOptions = { 'key' : 'fc1f5eaa03bb67a743c0e612bcf0397a', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+                </script>
+                <script src="https://www.highperformanceformat.com/fc1f5eaa03bb67a743c0e612bcf0397a/invoke.js"></script>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-6 text-center">
+                <div class="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-users text-4xl text-blue-400"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-2">Invite Friends</h2>
+                <p class="text-gray-300 text-sm mb-6">Earn <span class="text-yellow-400 font-bold">400 Coins</span> for every friend who joins and completes their first task or spin!</p>
+
+                <div class="bg-gray-900 rounded-xl p-3 flex items-center mb-6 border border-gray-700">
+                    <input type="text" id="ref-link-input" readonly class="bg-transparent w-full outline-none text-sm text-gray-400" value="Generating...">
+                    <button id="btn-copy-ref" class="ml-2 bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold">Copy</button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                        <p class="text-xs text-gray-400 mb-1">Total Referred</p>
+                        <p class="text-xl font-bold text-blue-400" id="ref-count">0</p>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                        <p class="text-xs text-gray-400 mb-1">Earned Coins</p>
+                        <p class="text-xl font-bold text-yellow-400" id="ref-earned">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Adsterra Native Banner-2 (Bottom) -->
+            <div class="ad-banner min-h-[250px] mt-6">
+                <script>
+                  atOptions = { 'key' : 'b301e9e298a7004777ddcb58245aa4fa', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
+                </script>
+                <script src="https://www.highperformanceformat.com/b301e9e298a7004777ddcb58245aa4fa/invoke.js"></script>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 4: WALLET ================= -->
+        <section id="wallet" class="tab-content space-y-4">
+            <!-- Adsterra Native Banner-1 (Top) -->
+            <div class="ad-banner min-h-[90px]">
+                <script>
+                  atOptions = { 'key' : 'fc1f5eaa03bb67a743c0e612bcf0397a', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+                </script>
+                <script src="https://www.highperformanceformat.com/fc1f5eaa03bb67a743c0e612bcf0397a/invoke.js"></script>
+            </div>
+
+            <!-- Balance Card -->
+            <div class="bg-gradient-to-br from-blue-600 to-purple-700 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 opacity-10">
+                    <i class="fa-solid fa-wallet text-9xl"></i>
+                </div>
+                <p class="text-blue-200 text-sm mb-1">Available Balance</p>
+                <h1 class="text-4xl font-bold text-white flex items-center gap-2 mb-4">
+                    <i class="fa-solid fa-coins text-yellow-400"></i> <span id="wallet-balance">0</span>
+                </h1>
+            </div>
+
+            <!-- Withdraw Section -->
+            <div class="glass-panel rounded-2xl p-5">
+                <h2 class="text-lg font-bold border-b border-gray-700 pb-2 mb-4">Withdraw Funds</h2>
+                
+                <div class="space-y-3 mb-4">
+                    <div class="flex justify-between text-xs text-gray-400">
+                        <span>Min. Limit: 10,000,000 Coins (10k BDT/1 USDT)</span>
+                    </div>
+                    <div class="text-xs bg-gray-800 p-2 rounded text-red-300">
+                        Requirements: Watch 10 Ads & Refer 7 Users to unlock.
+                    </div>
+                    
+                    <div class="flex items-center justify-between text-sm">
+                        <span>Ads Watched:</span>
+                        <span id="withdraw-ad-status" class="font-bold text-blue-400">0/10</span>
+                    </div>
+                    <button id="btn-watch-withdraw-ad" class="w-full bg-blue-600/50 border border-blue-500 py-2 rounded-lg text-sm">Watch Double Ad (15s+15s)</button>
+
+                    <div class="flex items-center justify-between text-sm mt-2">
+                        <span>Referrals:</span>
+                        <span id="withdraw-ref-status" class="font-bold text-blue-400">0/7</span>
+                    </div>
+                </div>
+
+                <div class="space-y-2 mt-4">
+                    <select id="withdraw-method" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none focus:border-blue-500">
+                        <option value="bkash">bKash (Personal)</option>
+                        <option value="nagad">Nagad (Personal)</option>
+                        <option value="usdt">USDT (TRC20)</option>
+                    </select>
+                    <input type="text" id="withdraw-account" placeholder="Enter Account / Address" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none focus:border-blue-500">
+                    <button id="btn-withdraw" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 font-bold py-3 rounded-xl opacity-50 cursor-not-allowed">
+                        Submit Withdraw
+                    </button>
+                </div>
+            </div>
+
+            <!-- Exchange Section -->
+            <div class="glass-panel rounded-2xl p-5">
+                <h2 class="text-lg font-bold border-b border-gray-700 pb-2 mb-4">Exchange Coins to BDT</h2>
+                <div class="text-xs text-gray-400 mb-3">Rate: 10,000 Coins = 5 BDT. Requires 5 double ads (20s+20s).</div>
+                
+                <div class="flex items-center justify-between text-sm mb-2">
+                    <span>Ads Watched:</span>
+                    <span id="exchange-ad-status" class="font-bold text-pink-400">0/5</span>
+                </div>
+                <button id="btn-watch-exchange-ad" class="w-full bg-pink-600/50 border border-pink-500 py-2 rounded-lg text-sm mb-4">Watch Double Ad (20s+20s)</button>
+
+                <button id="btn-exchange" class="w-full bg-gradient-to-r from-purple-500 to-pink-600 font-bold py-3 rounded-xl opacity-50 cursor-not-allowed">
+                    Convert 10,000 Coins
+                </button>
+            </div>
+
+            <!-- Adsterra Native Banner-2 (Bottom) -->
+            <div class="ad-banner min-h-[250px] mt-6">
+                <script>
+                  atOptions = { 'key' : 'b301e9e298a7004777ddcb58245aa4fa', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
+                </script>
+                <script src="https://www.highperformanceformat.com/b301e9e298a7004777ddcb58245aa4fa/invoke.js"></script>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 w-full bg-gray-900 border-t border-gray-800 z-40 pb-safe">
+        <div class="flex justify-around items-center py-3">
+            <button class="nav-btn active flex flex-col items-center text-blue-500 w-1/4" onclick="switchTab('home')">
+                <i class="fa-solid fa-house text-xl mb-1"></i>
+                <span class="text-[10px] font-bold">Home</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center text-gray-500 w-1/4 hover:text-blue-400 transition" onclick="switchTab('tasks')">
+                <i class="fa-solid fa-list-check text-xl mb-1"></i>
+                <span class="text-[10px] font-bold">Tasks</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center text-gray-500 w-1/4 hover:text-blue-400 transition" onclick="switchTab('referral')">
+                <i class="fa-solid fa-user-group text-xl mb-1"></i>
+                <span class="text-[10px] font-bold">Referral</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center text-gray-500 w-1/4 hover:text-blue-400 transition" onclick="switchTab('wallet')">
+                <i class="fa-solid fa-wallet text-xl mb-1"></i>
+                <span class="text-[10px] font-bold">Wallet</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MODALS -->
+    
+    <!-- Profile Modal -->
+    <div id="profile-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex justify-center items-center p-4">
+        <div class="bg-gray-800 rounded-2xl w-full max-w-sm p-6 relative border border-gray-700 shadow-2xl">
+            <button onclick="closeModal('profile-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <div class="text-center">
+                <div class="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 mx-auto flex justify-center items-center text-3xl font-bold mb-3 shadow-lg">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <h3 id="prof-name" class="text-xl font-bold">User Name</h3>
+                <p id="prof-id" class="text-sm text-gray-400 mb-4">ID: 000000</p>
+                <div class="bg-gray-900 rounded-lg p-3 text-left space-y-2">
+                    <p class="text-sm flex justify-between"><span>Join Date:</span> <span id="prof-date" class="text-blue-400">N/A</span></p>
+                    <p class="text-sm flex justify-between"><span>Total Earned:</span> <span id="prof-total-earned" class="text-yellow-400 font-bold">0</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ad Viewer Modal (Promises Based) -->
+    <div id="ad-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col">
+        <div class="bg-gray-900 p-3 flex justify-between items-center border-b border-gray-800">
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
+                <span id="ad-timer-text" class="font-bold text-white">Ad will close in 15s</span>
+            </div>
+            <button id="btn-close-ad" class="text-2xl text-gray-400 hover:text-white outline-none">❎</button>
+        </div>
+        <div class="flex-1 bg-gray-950 relative flex justify-center items-center">
+            <div id="ad-loader" class="absolute z-0 flex flex-col items-center">
+                <i class="fa-solid fa-spinner fa-spin text-4xl text-blue-500 mb-2"></i>
+                <span>Loading Ad...</span>
+            </div>
+            <iframe id="ad-iframe" class="w-full h-full relative z-10 border-none" src=""></iframe>
+        </div>
+    </div>
+
+    <!-- Success/Alert Modal -->
+    <div id="alert-modal" class="hidden fixed inset-0 z-[110] bg-black/60 flex justify-center items-center p-4">
+        <div class="bg-gray-800 rounded-xl p-6 text-center max-w-xs w-full shadow-2xl border border-gray-700 transform scale-100 transition-transform duration-300">
+            <div id="alert-icon" class="text-5xl text-green-500 mb-4"><i class="fa-solid fa-circle-check"></i></div>
+            <h3 id="alert-title" class="text-xl font-bold mb-2">Success!</h3>
+            <p id="alert-msg" class="text-sm text-gray-300 mb-6">Action completed.</p>
+            <button onclick="closeModal('alert-modal')" class="w-full bg-blue-600 font-bold py-2 rounded-lg">OK</button>
+        </div>
+    </div>
+
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <script>
+        // Direct Link Ads (Used in Modals, Buttons, and Auto-Tasks)
+        const AD_A_URL = "https://www.effectivecpmnetwork.com/b49wfbgj?key=a3d814e1bc4233b2b76f0494ff8f0b15";
+        const AD_B_URL = "https://omg10.com/4/11012360";
+
+        // State Management
+        const STATE_KEY = "freeEarnApp_state";
+        const FOUR_HOURS = 4 * 60 * 60 * 1000;
+
+        let state = {
+            balance: 0,
+            totalEarned: 0,
+            joinDate: Date.now(),
+            userId: "Guest_" + Math.floor(Math.random()*10000),
+            userName: "Guest",
+            daily: { lastClaim: 0, currentDay: 1 },
+            spins: { count: 0, lastReset: Date.now() },
+            autoSpins: { count: 0, lastReset: Date.now() },
+            tasks: { count: 0, lastReset: Date.now() },
+            referrals: { count: 0, earned: 0 },
+            withdrawAds: 0,
+            exchangeAds: 0
+        };
+
+        // Load or Init State
+        function loadState() {
+            let saved = localStorage.getItem(STATE_KEY);
+            if(saved) {
+                state = { ...state, ...JSON.parse(saved) };
+            }
+            checkResets();
+            saveState();
+        }
+
+        function saveState() {
+            localStorage.setItem(STATE_KEY, JSON.stringify(state));
+            updateUI();
+        }
+
+        function checkResets() {
+            const now = Date.now();
+            if(now - state.spins.lastReset > FOUR_HOURS) { state.spins.count = 0; state.spins.lastReset = now; }
+            if(now - state.autoSpins.lastReset > FOUR_HOURS) { state.autoSpins.count = 0; state.autoSpins.lastReset = now; }
+            if(now - state.tasks.lastReset > FOUR_HOURS) { state.tasks.count = 0; state.tasks.lastReset = now; }
+            
+            // Daily Reset (UTC 00:00)
+            const lastClaimDate = new Date(state.daily.lastClaim);
+            const nowDate = new Date();
+            if(state.daily.lastClaim > 0 && 
+              (lastClaimDate.getUTCFullYear() !== nowDate.getUTCFullYear() ||
+               lastClaimDate.getUTCMonth() !== nowDate.getUTCMonth() ||
+               lastClaimDate.getUTCDate() !== nowDate.getUTCDate())) {
+                // Next day is available
+                if(now - state.daily.lastClaim > 2 * 24 * 60 * 60 * 1000) {
+                    state.daily.currentDay = 1; // Missed a day, reset to 1
+                } else if (state.daily.currentDay < 7) {
+                    state.daily.currentDay++;
+                }
+            }
+        }
+
+        function addCoins(amount) {
+            state.balance += amount;
+            state.totalEarned += amount;
+            saveState();
+        }
+
+        // UI Updates
+        function updateUI() {
+            document.getElementById('top-balance').innerText = state.balance.toLocaleString();
+            document.getElementById('wallet-balance').innerText = state.balance.toLocaleString();
+            
+            document.getElementById('manual-spin-count').innerText = 21 - state.spins.count;
+            document.getElementById('manual-spin-status').innerText = state.spins.count === 0 ? "Free" : "Watch Ad";
+            
+            document.getElementById('auto-spin-count').innerText = 21 - state.autoSpins.count;
+            document.getElementById('task-limit-count').innerText = 20 - state.tasks.count;
+
+            document.getElementById('ref-count').innerText = state.referrals.count;
+            document.getElementById('ref-earned').innerText = state.referrals.earned;
+
+            // Withdraw / Exchange logic
+            document.getElementById('withdraw-ad-status').innerText = `${state.withdrawAds}/10`;
+            document.getElementById('withdraw-ref-status').innerText = `${state.referrals.count}/7`;
+            const btnWithdraw = document.getElementById('btn-withdraw');
+            if(state.balance >= 10000000 && state.withdrawAds >= 10 && state.referrals.count >= 7) {
+                btnWithdraw.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            document.getElementById('exchange-ad-status').innerText = `${state.exchangeAds}/5`;
+            const btnEx = document.getElementById('btn-exchange');
+            if(state.balance >= 10000 && state.exchangeAds >= 5) {
+                btnEx.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            renderDailyRewards();
+        }
+
+        // Navigation
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-blue-500');
+                btn.classList.add('text-gray-500');
+            });
+            event.currentTarget.classList.remove('text-gray-500');
+            event.currentTarget.classList.add('text-blue-500');
+        }
+
+        // Modals & Alerts
+        function showAlert(title, msg, type="success") {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-msg').innerText = msg;
+            document.getElementById('alert-icon').innerHTML = type === "success" ? '<i class="fa-solid fa-circle-check"></i>' : '<i class="fa-solid fa-circle-exclamation text-red-500"></i>';
+            document.getElementById('alert-modal').classList.remove('hidden');
+        }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // Telegram Web App Setup
+        if (window.Telegram && window.Telegram.WebApp) {
+            const tg = window.Telegram.WebApp;
+            tg.expand(); // Full screen
+            const tgUser = tg.initDataUnsafe?.user;
+            if(tgUser) {
+                state.userId = tgUser.id;
+                state.userName = tgUser.first_name || tgUser.username || "User";
+                saveState();
+            }
+        }
+        
+        document.getElementById('ref-link-input').value = `https://t.me/FreeEarnBot?start=${state.userId}`;
+
+        document.getElementById('btn-profile').addEventListener('click', () => {
+            document.getElementById('prof-name').innerText = state.userName;
+            document.getElementById('prof-id').innerText = "ID: " + state.userId;
+            const jDate = new Date(state.joinDate);
+            document.getElementById('prof-date').innerText = jDate.toLocaleDateString();
+            document.getElementById('prof-total-earned').innerText = state.totalEarned;
+            document.getElementById('profile-modal').classList.remove('hidden');
+        });
+
+        // ---------------- PROMISE BASED AD SYSTEM (Direct Links A & B) ----------------
+        let activeAdReject = null;
+
+        function showAd(url, durationSeconds) {
+            return new Promise((resolve, reject) => {
+                const modal = document.getElementById('ad-modal');
+                const iframe = document.getElementById('ad-iframe');
+                const timerText = document.getElementById('ad-timer-text');
+                const closeBtn = document.getElementById('btn-close-ad');
+                
+                let timeLeft = durationSeconds;
+                activeAdReject = reject;
+
+                iframe.src = url;
+                modal.classList.remove('hidden');
+                timerText.innerText = `Ad will close in ${timeLeft}s`;
+                closeBtn.style.display = 'block';
+
+                const interval = setInterval(() => {
+                    timeLeft--;
+                    timerText.innerText = `Ad will close in ${timeLeft}s`;
+                    if(timeLeft <= 0) {
+                        clearInterval(interval);
+                        finishAd();
+                    }
+                }, 1000);
+
+                // Handle close (❎)
+                closeBtn.onclick = () => {
+                    clearInterval(interval);
+                    modal.classList.add('hidden');
+                    iframe.src = "";
+                    reject(new Error("Ad closed early"));
+                };
+
+                function finishAd() {
+                    modal.classList.add('hidden');
+                    iframe.src = "";
+                    activeAdReject = null;
+                    resolve(true);
+                }
+            });
+        }
+
+        // Helper for consecutive ads (e.g. 15s + 15s)
+        async function runDoubleAd(url, durationPerAd) {
+            try {
+                await showAd(url, durationPerAd);
+                // small delay between ads to simulate real reload
+                await new Promise(r => setTimeout(r, 500)); 
+                await showAd(url, durationPerAd);
+                return true;
+            } catch (e) {
+                console.log(e.message);
+                return false;
+            }
+        }
+
+
+        // ---------------- DAILY REWARDS ----------------
+        const dailyRewards = [10, 20, 30, 50, 70, 90, 100];
+        function renderDailyRewards() {
+            const grid = document.getElementById('daily-reward-grid');
+            grid.innerHTML = '';
+            
+            const lastClaimDate = new Date(state.daily.lastClaim);
+            const nowDate = new Date();
+            const isClaimedToday = (state.daily.lastClaim > 0 && 
+               lastClaimDate.getUTCFullYear() === nowDate.getUTCFullYear() &&
+               lastClaimDate.getUTCMonth() === nowDate.getUTCMonth() &&
+               lastClaimDate.getUTCDate() === nowDate.getUTCDate());
+
+            for(let i=0; i<7; i++) {
+                let dayNum = i+1;
+                let isToday = dayNum === state.daily.currentDay;
+                let isPast = dayNum < state.daily.currentDay;
+                
+                let boxCls = "bg-gray-800 border-gray-700 text-gray-400";
+                if(isPast) boxCls = "bg-green-900/50 border-green-500 text-green-400";
+                if(isToday && !isClaimedToday) boxCls = "bg-blue-600 border-blue-400 text-white shadow-[0_0_10px_rgba(59,130,246,0.5)]";
+                if(isToday && isClaimedToday) boxCls = "bg-green-900/50 border-green-500 text-green-400";
+
+                grid.innerHTML += `
+                    <div class="border rounded-lg p-2 text-center flex flex-col items-center justify-center ${boxCls}">
+                        <span class="text-[10px] uppercase font-bold mb-1">Day ${dayNum}</span>
+                        <i class="fa-solid fa-coins text-sm ${isPast||(isToday&&isClaimedToday)?'':'text-yellow-400'} mb-1"></i>
+                        <span class="text-xs font-bold">${dailyRewards[i]}</span>
+                    </div>
+                `;
+            }
+
+            const btn = document.getElementById('btn-claim-daily');
+            if(isClaimedToday) {
+                btn.innerText = "Come back tomorrow";
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.onclick = null;
+            } else {
+                btn.innerText = "Claim Daily Reward";
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.onclick = async () => {
+                    // Requires 10s of Adsterra-B
+                    try {
+                        const success = await showAd(AD_B_URL, 10);
+                        if(success) {
+                            addCoins(dailyRewards[state.daily.currentDay - 1]);
+                            state.daily.lastClaim = Date.now();
+                            saveState();
+                            showAlert("Daily Claimed", `You received ${dailyRewards[state.daily.currentDay - 1]} coins!`);
+                        }
+                    } catch(e) {
+                        showAlert("Failed", "You must watch the full ad to claim.", "error");
+                    }
+                };
+            }
+        }
+
+
+        // ---------------- SPIN WHEEL LOGIC ----------------
+        const wheelSegments = [50, 70, 90, 100, 120, 140, 150, 0]; // 0 = Try again
+        // Map degrees to segments. 0 deg is top. 
+        // 8 segments = 45 deg each.
+        const segmentColors = ['#f87171', '#fbbf24', '#34d399', '#60a5fa', '#a78bfa', '#f472b6', '#38bdf8', '#94a3b8'];
+
+        function drawWheel(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = centerX;
+            const arc = Math.PI / 4; // 360/8
+
+            ctx.clearRect(0,0, canvas.width, canvas.height);
+
+            for (let i = 0; i < 8; i++) {
+                ctx.beginPath();
+                ctx.fillStyle = segmentColors[i];
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, i * arc - Math.PI/2, (i + 1) * arc - Math.PI/2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Draw Text
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(i * arc + arc / 2 - Math.PI/2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 20px sans-serif";
+                
+                let text = wheelSegments[i] === 0 ? "Try Again" : wheelSegments[i];
+                ctx.fillText(text, radius - 15, 6);
+                ctx.restore();
+            }
+        }
+
+        drawWheel('wheel-manual');
+        drawWheel('wheel-auto');
+
+        let manualRotation = 0;
+        let isSpinningManual = false;
+
+        document.getElementById('btn-spin-manual').onclick = async () => {
+            if(isSpinningManual) return;
+            if(state.spins.count >= 21) {
+                showAlert("Limit Reached", "You have used all 21 spins for this 4-hour period.", "error");
+                return;
+            }
+
+            // Check if ad required
+            if(state.spins.count > 0) {
+                try {
+                    // Adsterra A - 10s
+                    await showAd(AD_A_URL, 10);
+                } catch (e) {
+                    showAlert("Ad Closed", "You must watch the ad to spin.", "error");
+                    return;
+                }
+            }
+
+            executeManualSpin();
+        };
+
+        function executeManualSpin() {
+            isSpinningManual = true;
+            const canvas = document.getElementById('wheel-manual');
+            
+            // Random segment where prompt says: "এখনে স্পিন করলে 50,70,90,100কয়েন পাবে"
+            // Let's bias the logic to only land on 50, 70, 90, 100 indices: 0, 1, 2, 3
+            const allowedIndices = [0, 1, 2, 3];
+            const targetIndex = allowedIndices[Math.floor(Math.random() * allowedIndices.length)];
+            
+            // Calculate rotation
+            const spins = 5; // extra rotations
+            const degreesPerSegment = 360 / 8;
+            // Target angle to land pointer (top)
+            const targetAngle = 360 - (targetIndex * degreesPerSegment + degreesPerSegment/2);
+            
+            manualRotation += (spins * 360) + targetAngle - (manualRotation % 360);
+            
+            canvas.style.transform = `rotate(${manualRotation}deg)`;
+
+            setTimeout(async () => {
+                isSpinningManual = false;
+                state.spins.count++;
+                saveState();
+                
+                const winAmount = wheelSegments[targetIndex];
+                
+                // Prompt: "Claim" button needs 10s Adsterra B
+                if(confirm(`You won ${winAmount} Coins! Click OK to watch a short ad to Claim.`)) {
+                    try {
+                        await showAd(AD_B_URL, 10);
+                        addCoins(winAmount);
+                        showAlert("Success", `${winAmount} Coins added to your balance.`);
+                    } catch(e) {
+                        showAlert("Missed", "Ad closed early. Coins not claimed.", "error");
+                    }
+                }
+
+            }, 4000); // matches CSS transition 4s
+        }
+
+        // ---------------- AUTO SPIN LOGIC ----------------
+        let autoRotation = 0;
+        let isAutoSpinning = false;
+        let autoSpinInterval = null;
+
+        const btnStartAuto = document.getElementById('btn-spin-auto');
+        const btnStopAuto = document.getElementById('btn-stop-auto');
+
+        btnStartAuto.onclick = () => {
+            if(state.autoSpins.count >= 21) {
+                showAlert("Limit Reached", "Auto spins limit (21) reached for this 4h period.", "error");
+                return;
+            }
+            isAutoSpinning = true;
+            btnStartAuto.classList.add('hidden');
+            btnStopAuto.classList.remove('hidden');
+            runAutoSpinLoop();
+        };
+
+        btnStopAuto.onclick = () => {
+            isAutoSpinning = false;
+            btnStopAuto.classList.add('hidden');
+            btnStartAuto.classList.remove('hidden');
+        };
+
+        async function runAutoSpinLoop() {
+            if(!isAutoSpinning) return;
+            if(state.autoSpins.count >= 21) {
+                btnStopAuto.click();
+                showAlert("Limit Reached", "Auto spins limit reached.", "error");
+                return;
+            }
+
+            try {
+                // Auto spin requires 2 ads (15s + 15s) = 30s of Ad A
+                const success = await runDoubleAd(AD_A_URL, 15);
+                if(!success) {
+                    btnStopAuto.click();
+                    return; // user closed ad
+                }
+
+                // Execute Spin Graphic
+                const canvas = document.getElementById('wheel-auto');
+                const allowedIndices = [0, 1, 2, 3];
+                const targetIndex = allowedIndices[Math.floor(Math.random() * allowedIndices.length)];
+                
+                const spins = 5;
+                const degreesPerSegment = 360 / 8;
+                const targetAngle = 360 - (targetIndex * degreesPerSegment + degreesPerSegment/2);
+                
+                autoRotation += (spins * 360) + targetAngle - (autoRotation % 360);
+                canvas.style.transform = `rotate(${autoRotation}deg)`;
+
+                // Wait for animation to finish
+                await new Promise(r => setTimeout(r, 4000));
+
+                const winAmount = wheelSegments[targetIndex];
+                addCoins(winAmount);
+                state.autoSpins.count++;
+                saveState();
+
+                // Small delay before next loop
+                await new Promise(r => setTimeout(r, 1000));
+                
+                // Loop recursively
+                runAutoSpinLoop();
+
+            } catch(e) {
+                btnStopAuto.click();
+            }
+        }
+
+
+        // ---------------- TASKS LOGIC ----------------
+        const tasksData = [
+            { id: 1, name: "Visit Website", reward: 70, type: 'manual' },
+            { id: 2, name: "Auto Visit Website", reward: 150, type: 'auto' },
+            { id: 3, name: "Watch Video", reward: 80, type: 'manual' },
+            { id: 4, name: "Auto Watch Video", reward: 160, type: 'auto' },
+            { id: 5, name: "Watch Ad", reward: 60, type: 'manual' },
+            { id: 6, name: "Auto Watch Ad", reward: 140, type: 'auto' }
+        ];
+
+        let activeAutoTask = false;
+
+        function renderTasks() {
+            const list = document.getElementById('task-list');
+            list.innerHTML = '';
+            
+            tasksData.forEach(task => {
+                const btnId = `btn-task-${task.id}`;
+                list.innerHTML += `
+                    <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold text-sm">${task.name}</h3>
+                            <p class="text-xs text-yellow-400 mt-1">+${task.reward} Coins</p>
+                        </div>
+                        <button id="${btnId}" class="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold shadow-lg transition transform hover:scale-105">
+                            ${task.type === 'auto' ? 'Start Auto' : 'Go'}
+                        </button>
+                    </div>
+                `;
+            });
+
+            // Add Event Listeners
+            setTimeout(() => {
+                tasksData.forEach(task => {
+                    document.getElementById(`btn-task-${task.id}`).onclick = () => handleTask(task);
+                });
+            }, 100);
+        }
+
+        async function handleTask(task) {
+            if(state.tasks.count >= 20) {
+                showAlert("Limit Reached", "You have completed 20 tasks for this 4h period.", "error");
+                return;
+            }
+
+            if(task.type === 'manual') {
+                // Manual: Ad B 20s
+                try {
+                    const success = await showAd(AD_B_URL, 20);
+                    if(success) {
+                        addCoins(task.reward);
+                        state.tasks.count++;
+                        saveState();
+                        showAlert("Task Successful", `You received ${task.reward} coins.`);
+                    }
+                } catch(e) {
+                    showAlert("Failed", "Ad closed early.", "error");
+                }
+            } else {
+                // Auto: 2x Ad A (15s+15s). Repeats automatically.
+                if(activeAutoTask) return;
+                activeAutoTask = true;
+                runAutoTaskLoop(task);
+            }
+        }
+
+        async function runAutoTaskLoop(task) {
+            if(!activeAutoTask || state.tasks.count >= 20) {
+                activeAutoTask = false;
+                if(state.tasks.count >= 20) showAlert("Limit Reached", "Task limit reached.");
+                return;
+            }
+
+            try {
+                const success = await runDoubleAd(AD_A_URL, 15);
+                if(!success) { activeAutoTask = false; return; }
+
+                addCoins(task.reward);
+                state.tasks.count++;
+                saveState();
+                
+                // Show brief success alert that auto-closes
+                const alertModal = document.getElementById('alert-modal');
+                document.getElementById('alert-title').innerText = "Successful";
+                document.getElementById('alert-msg').innerText = `+${task.reward} Coins`;
+                document.getElementById('alert-icon').innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                alertModal.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    alertModal.classList.add('hidden');
+                    // Continue loop
+                    runAutoTaskLoop(task);
+                }, 1500);
+
+            } catch(e) {
+                activeAutoTask = false;
+            }
+        }
+
+
+        // ---------------- REFERRAL LOGIC ----------------
+        document.getElementById('btn-copy-ref').onclick = () => {
+            const link = document.getElementById('ref-link-input');
+            link.select();
+            document.execCommand("copy");
+            document.getElementById('btn-copy-ref').innerText = "Copied!";
+            setTimeout(() => document.getElementById('btn-copy-ref').innerText = "Copy", 2000);
+            
+            // Simulation: Add a fake referral for demo purposes randomly
+            if(Math.random() > 0.5 && state.referrals.count < 10) {
+                setTimeout(() => {
+                    state.referrals.count++;
+                    state.referrals.earned += 400;
+                    addCoins(400);
+                    showAlert("New Referral!", "Someone joined using your link! +400 Coins.");
+                }, 3000);
+            }
+        };
+
+
+        // ---------------- WALLET / WITHDRAW / EXCHANGE ----------------
+        
+        // Watch Withdraw Ad (Double 15+15)
+        document.getElementById('btn-watch-withdraw-ad').onclick = async () => {
+            if(state.withdrawAds >= 10) return;
+            const success = await runDoubleAd(AD_A_URL, 15);
+            if(success) {
+                state.withdrawAds++;
+                saveState();
+                showAlert("Success", "Withdraw ad requirement progressed.");
+            }
+        };
+
+        // Watch Exchange Ad (Double 20+20)
+        document.getElementById('btn-watch-exchange-ad').onclick = async () => {
+            if(state.exchangeAds >= 5) return;
+            const success = await runDoubleAd(AD_B_URL, 20);
+            if(success) {
+                state.exchangeAds++;
+                saveState();
+                showAlert("Success", "Exchange ad requirement progressed.");
+            }
+        };
+
+        // Submit Withdraw
+        document.getElementById('btn-withdraw').onclick = () => {
+            if(state.balance < 10000000 || state.withdrawAds < 10 || state.referrals.count < 7) return;
+            const acc = document.getElementById('withdraw-account').value;
+            if(!acc) {
+                showAlert("Error", "Please enter account details.", "error");
+                return;
+            }
+            
+            state.balance -= 10000000;
+            state.withdrawAds = 0; // Reset req
+            saveState();
+            showAlert("Withdraw Requested", "Your request is processing and will be completed soon.");
+            document.getElementById('withdraw-account').value = "";
+        };
+
+        // Exchange
+        document.getElementById('btn-exchange').onclick = () => {
+            if(state.balance < 10000 || state.exchangeAds < 5) return;
+            
+            state.balance -= 10000;
+            state.exchangeAds = 0; // Reset req
+            saveState();
+            showAlert("Exchange Successful", "10,000 Coins converted to 5 BDT (Simulated).");
+        };
+
+        // Init
+        loadState();
+        renderTasks();
+
+    </script>
+</body>
+</html>
