@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fruit Catcher Mini App</title>
+    <!-- Tailwind CSS for modern layout -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- REAL ADSGRAM LIVE SDK INTEGRATION -->
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+    <style>
+        body {
+            background-color: #0F172A;
+            color: #F8FAFC;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .active-tab {
+            color: #0088CC !important;
+            transform: scale(1.05);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden select-none">
+
+    <!-- TOP HEADER STATUS BAR -->
+    <header class="bg-[#1E293B] border-b border-slate-800 p-4 flex justify-between items-center shrink-0 z-50">
+        <div class="flex items-center gap-2">
+            <div id="user-avatar" class="w-8 h-8 rounded-full bg-[#0088CC] flex items-center justify-center font-bold text-white text-sm">U</div>
+            <span id="username-display" class="font-medium text-sm text-slate-200">Loading...</span>
+        </div>
+        <div class="flex items-center gap-3 text-xs font-bold">
+            <div class="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-full border border-slate-700">
+                <span>💸</span> <span id="balance-coins">0</span>
+            </div>
+            <div class="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-full border border-slate-700">
+                <span>💎</span> <span id="balance-tickets">0</span>
+            </div>
+            <div class="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-full border border-slate-700">
+                <span>🪙</span> <span id="balance-gold">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN VIEWS CONTAINER -->
+    <main class="flex-1 overflow-y-auto hide-scrollbar pb-24 p-4 relative">
+        
+        <!-- HOME VIEW -->
+        <section id="view-home" class="view-content space-y-6">
+            <!-- Manual Spin Wheel Block -->
+            <div class="bg-[#1E293B] rounded-2xl p-5 border border-slate-800 text-center shadow-xl">
+                <h2 class="text-lg font-bold text-slate-100 mb-1 flex justify-center items-center gap-2">🎡 Lucky Spin Wheel <span class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded">Daily Reset</span></h2>
+                <p class="text-xs text-slate-400 mb-4">First spin free, continuous spins verification via Adsgram</p>
+                <div class="relative w-64 h-64 mx-auto mb-4">
+                    <canvas id="wheel-canvas" width="256" height="256" class="w-full h-full transition-transform duration-1000 ease-out"></canvas>
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-6 bg-red-500 clip-triangle z-10 shadow-md"></div>
+                </div>
+                <button id="btn-spin-manual" class="w-full bg-[#0088CC] hover:bg-[#0077B5] text-white font-bold py-3 rounded-xl transition shadow-lg active:scale-95 text-sm">SPIN WHEEL</button>
+            </div>
+
+            <!-- Auto Spin Wheel Block -->
+            <div class="bg-[#1E293B] rounded-2xl p-5 border border-slate-800 text-center shadow-xl">
+                <h2 class="text-lg font-bold text-slate-100 mb-1 flex justify-center items-center gap-2">🤖 Automated Loop Spinner</h2>
+                <div class="grid grid-cols-3 gap-2 my-3 text-xs bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                    <div><p class="text-slate-400">Remaining</p><p id="auto-spin-rem" class="font-bold text-sm text-amber-400">100</p></div>
+                    <div><p class="text-slate-400">Session Spun</p><p id="auto-spin-count" class="font-bold text-sm text-slate-200">0</p></div>
+                    <div><p class="text-slate-400">Earned</p><p id="auto-spin-earned" class="font-bold text-sm text-emerald-400">0 💸</p></div>
+                </div>
+                <div class="flex gap-2">
+                    <button id="btn-spin-auto-start" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition active:scale-95 text-sm">START AUTO</button>
+                    <button id="btn-spin-auto-stop" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-xl transition active:scale-95 text-sm hidden">STOP</button>
+                </div>
+            </div>
+
+            <!-- 7-Day Reward Grid -->
+            <div class="bg-[#1E293B] rounded-2xl p-5 border border-slate-800 shadow-xl">
+                <h2 class="text-md font-bold text-slate-100 mb-3">📅 7-Day Rewards Streak</h2>
+                <div class="grid grid-cols-4 gap-2 mb-4" id="daily-grid-container">
+                    <!-- Dynamic rendering fallback template inside JS -->
+                </div>
+                <button id="btn-daily-claim" class="w-full bg-slate-700 text-slate-400 font-bold py-2.5 rounded-xl text-sm cursor-not-allowed" disabled>Claim Daily Reward</button>
+            </div>
+        </section>
+
+        <!-- GAME VIEW -->
+        <section id="view-game" class="view-content space-y-4 hidden">
+            <div class="bg-[#1E293B] rounded-2xl p-4 border border-slate-800 text-center relative overflow-hidden">
+                <div id="game-lobby" class="py-8">
+                    <div class="w-20 h-20 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 animate-bounce">🍓</div>
+                    <h2 class="text-xl font-bold mb-1">Fruit Catcher Engine</h2>
+                    <p class="text-xs text-slate-400 max-w-xs mx-auto mb-6">20 Second Blitz session. Collect falling fruits, avoid explosive elements. Requires 1 Ad token entry verification payload.</p>
+                    <button id="btn-start-game" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black px-8 py-3.5 rounded-xl text-sm shadow-xl transition transform active:scale-95">WATCH AD & PLAY</button>
+                </div>
+                
+                <div id="game-active-zone" class="hidden relative">
+                    <div class="flex justify-between items-center text-xs bg-slate-900 p-2 rounded-lg mb-2">
+                        <span class="text-amber-400 font-bold">⏱️ Time: <span id="game-timer">20</span>s</span>
+                        <span class="text-emerald-400 font-bold">Score: <span id="game-score">0</span></span>
+                        <span class="text-indigo-400 font-bold">Combo: x<span id="game-combo">1</span></span>
+                    </div>
+                    <canvas id="game-canvas" class="w-full bg-slate-950 border border-slate-800 rounded-xl block touch-none" height="350" width="320"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- TASKS VIEW -->
+        <section id="view-tasks" class="view-content space-y-6 hidden">
+            <div>
+                <h3 class="text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">💎 Standard Ads Tasks</h3>
+                <div class="space-y-3" id="standard-tasks-box"></div>
+            </div>
+            <div class="border-t border-slate-800 pt-4">
+                <h3 class="text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">🤖 Continuous Auto-Watch Loop</h3>
+                <div class="bg-[#1E293B] border border-slate-800 rounded-xl p-4">
+                    <div class="flex justify-between items-center text-xs mb-2">
+                        <span class="text-slate-300 font-bold">Loop Execution Task</span>
+                        <span id="auto-task-ratio" class="text-indigo-400 font-bold">0 / 50 Completed</span>
+                    </div>
+                    <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden mb-4 border border-slate-800">
+                        <div id="auto-task-progress-bar" class="bg-indigo-500 h-full w-0 transition-all duration-300"></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="btn-auto-task-start" class="flex-1 bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-xs">START AUTO ADS</button>
+                        <button id="btn-auto-task-stop" class="flex-1 bg-rose-600 text-white font-bold py-2.5 rounded-xl text-xs hidden">STOP LOOP</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- WALLET VIEW -->
+        <section id="view-wallet" class="view-content space-y-4 hidden">
+            <div class="bg-[#1E293B] rounded-2xl p-5 border border-slate-800 text-center">
+                <p class="text-xs text-slate-400 mb-1">Target Account Destination</p>
+                <div id="wallet-status" class="text-sm font-mono font-bold text-rose-400 mb-4 break-all bg-slate-900 p-3 rounded-xl border border-slate-800">Disconnected</div>
+                <button id="btn-wallet-connect" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 rounded-xl text-sm transition transform active:scale-95">Connect TON Wallet</button>
+            </div>
+
+            <div class="bg-[#1E293B] rounded-2xl p-5 border border-slate-800">
+                <h3 class="text-sm font-bold text-slate-200 mb-3">Request Withdrawal Settlement</h3>
+                <div class="space-y-2 mb-4">
+                    <label class="text-xs text-slate-400 block">Select Gold Liquidation Tier:</label>
+                    <select id="withdraw-amount-select" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm focus:outline-none focus:border-[#0088CC]">
+                        <option value="2000000">2M Gold (Cost: 2000 💎 + 0.05 Network Fee)</option>
+                        <option value="4000000">4M Gold (Cost: 4000 💎 + 0.05 Network Fee)</option>
+                        <option value="6000000">6M Gold (Cost: 6000 💎 + 0.05 Network Fee)</option>
+                        <option value="8000000">8M Gold (Cost: 8000 💎 + 0.05 Network Fee)</option>
+                        <option value="10000000">10M Gold (Cost: 10000 💎 + 0.05 Network Fee)</option>
+                    </select>
+                </div>
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-1 text-xs mb-4">
+                    <div class="flex justify-between"><span>Selected:</span><span id="wd-summary-gold" class="text-amber-400 font-bold">2,000,000 🪙</span></div>
+                    <div class="flex justify-between"><span>Required Tickets:</span><span id="wd-summary-diamonds" class="text-cyan-400 font-bold">2,000 💎</span></div>
+                    <div class="flex justify-between"><span>Network Surcharge:</span><span class="text-slate-400">0.05 💎</span></div>
+                    <div class="flex justify-between border-t border-slate-800 pt-1 mt-1 font-bold"><span>Total Required:</span><span id="wd-summary-net" class="text-indigo-400">2000.05 💎</span></div>
+                </div>
+                <button id="btn-withdraw-action" class="w-full bg-slate-700 text-slate-400 font-bold py-3 rounded-xl text-sm cursor-not-allowed" disabled>Connect Wallet to Withdraw</button>
+            </div>
+
+            <div class="bg-[#1E293B] rounded-2xl p-4 border border-slate-800">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Recent Ledger Records (Max 10)</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-500"><th class="pb-2">Date</th><th class="pb-2">Amount</th><th class="pb-2">Status</th></tr>
+                        </thead>
+                        <tbody id="payment-history-rows">
+                            <tr><td colspan="3" class="pt-2 text-center text-slate-500">No records documented.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- LOADING / ADS OVERLAY ANIMATION SYSTEM -->
+    <div id="ads-loading-overlay" class="fixed inset-0 bg-slate-950/90 z-50 flex flex-col items-center justify-center space-y-3 pointer-events-none opacity-0 transition-opacity duration-300">
+        <div class="w-12 h-12 border-4 border-[#0088CC] border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-sm font-bold text-slate-200">Streaming Sponsored Ad Token...</p>
+        <p class="text-xs text-slate-500">Do not close the application container</p>
+    </div>
+
+    <!-- REWARD MODAL POPUP -->
+    <div id="reward-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 p-6">
+        <div class="bg-[#1E293B] border border-slate-700 w-full max-w-sm rounded-2xl p-6 text-center shadow-2xl transform scale-95 transition-transform duration-300" id="reward-modal-card">
+            <div class="text-4xl mb-2">🎁</div>
+            <h3 class="text-lg font-black text-slate-100 mb-1" id="reward-title">Unclaimed Pool Allocation</h3>
+            <p class="text-xs text-slate-400 mb-4" id="reward-desc">Complete cryptographic verification fallback validation.</p>
+            <button id="btn-reward-claim-confirm" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 rounded-xl text-sm transition shadow-lg">VERIFY & CLAIM</button>
+        </div>
+    </div>
+
+    <!-- CORE BOTTOM NAVIGATION BAR -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-[#1E293B]/95 backdrop-blur-md border-t border-slate-800 p-2 flex justify-around items-center shrink-0 z-40 shadow-xl">
+        <button onclick="switchTab('home')" id="nav-home" class="flex flex-col items-center gap-0.5 text-slate-400 transition text-[10px] font-bold py-1 w-16 active:scale-90">
+            <span class="text-xl">🏠</span>Home
+        </button>
+        <button onclick="switchTab('game')" id="nav-game" class="flex flex-col items-center gap-0.5 text-slate-400 transition text-[10px] font-bold py-1 w-16 active:scale-90">
+            <span class="text-xl">🎮</span>Game
+        </button>
+        <button onclick="switchTab('tasks')" id="nav-tasks" class="flex flex-col items-center gap-0.5 text-slate-400 transition text-[10px] font-bold py-1 w-16 active:scale-90">
+            <span class="text-xl">📋</span>Tasks
+        </button>
+        <button onclick="switchTab('wallet')" id="nav-wallet" class="flex flex-col items-center gap-0.5 text-slate-400 transition text-[10px] font-bold py-1 w-16 active:scale-90">
+            <span class="text-xl">💼</span>Wallet
+        </button>
+    </nav>
+
+    <!-- SYSTEM SCRIPTING LAYER -->
+    <script>
+        // Global Local State Mock
+        let state = {
+            tgId: "12345678",
+            username: "Telegram Explorer",
+            coins: 1000,
+            tickets: 50,
+            gold: 50000,
+            adsWatched: 0,
+            totalSpins: 0,
+            dailyRewardStatus: false,
+            lastDailyClaim: null,
+            gameLevel: 1,
+            walletAddress: null,
+            history: [],
+            autoSpinsRemaining: 100,
+            standardTasks: [
+                { id: 1, target: 25, current: 0, claimed: false },
+                { id: 2, target: 25, current: 0, claimed: false },
+                { id: 3, target: 25, current: 0, claimed: false }
+            ]
+        };
+
+        // Initialize Telegram WebApp Object parameters securely
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.ready();
+            tg.expand();
+            if (tg.initDataUnsafe?.user) {
+                state.tgId = tg.initDataUnsafe.user.id.toString();
+                state.username = tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name;
+            }
+        }
+
+        // Render reactive UI components updates from centralized state metrics
+        function updateUIBalances() {
+            document.getElementById('username-display').innerText = state.username;
+            document.getElementById('balance-coins').innerText = Math.floor(state.coins).toLocaleString();
+            document.getElementById('balance-tickets').innerText = Math.floor(state.tickets).toLocaleString();
+            document.getElementById('balance-gold').innerText = Math.floor(state.gold).toLocaleString();
+            document.getElementById('auto-spin-rem').innerText = state.autoSpinsRemaining;
+        }
+
+        // Global Single-Page Application Tab Switch Engine
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-content').forEach(view => view.classList.add('hidden'));
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active-tab'));
+            
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabId}`).classList.add('active-tab');
+            if(tabId === 'game') initGameCanvasEngine();
+        }
+
+        // REAL ADSGRAM CONTROLLER ENGINE WITH LIVE BLOCK ID
+        const AdsgramController = {
+            triggerAd: async function() {
+                const overlay = document.getElementById('ads-loading-overlay');
+                overlay.classList.remove('opacity-0');
+                overlay.classList.add('opacity-100');
+                
+                // Check if the live SDK script loaded properly
+                if (!window.Adsgram) {
+                    overlay.classList.remove('opacity-100');
+                    overlay.classList.add('opacity-0');
+                    alert("Adsgram SDK could not be loaded. Please turn off AdBlocker if active.");
+                    return false;
+                }
+                
+                try {
+                    // Initializing with your target active Block ID: 34535
+                    const AdControllerInstance = window.Adsgram.init({ blockId: "34535" });
+                    const res = await AdControllerInstance.show();
+                    
+                    state.adsWatched++;
+                    overlay.classList.remove('opacity-100');
+                    overlay.classList.add('opacity-0');
+                    
+                    // Returns true only if the user fully watches the video
+                    return res && res.done;
+                } catch(err) {
+                    console.error("Adsgram dynamic event exception logged:", err);
+                    overlay.classList.remove('opacity-100');
+                    overlay.classList.add('opacity-0');
+                    alert("Ad skipped or failed to load. Rewards are strictly protected.");
+                    return false;
+                }
+            }
+        };
+
+        // Modal Presentation UI Lifecycle Helper Hook Methods
+        let pendingClaimCallback = null;
+        function presentRewardModal(title, description, callback) {
+            document.getElementById('reward-title').innerText = title;
+            document.getElementById('reward-desc').innerText = description;
+            pendingClaimCallback = callback;
+            
+            const modal = document.getElementById('reward-modal');
+            const card = document.getElementById('reward-modal-card');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            card.classList.remove('scale-95');
+        }
+        document.getElementById('btn-reward-claim-confirm').onclick = async function() {
+            const modal = document.getElementById('reward-modal');
+            const card = document.getElementById('reward-modal-card');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            card.classList.add('scale-95');
+            
+            if(pendingClaimCallback) {
+                const verified = await AdsgramController.triggerAd();
+                if(verified) {
+                    pendingClaimCallback();
+                }
+                pendingClaimCallback = null;
+            }
+        };
+
+        // SECTION 1: CANVAS-BASED GRAPHICAL WHEEL ENGINE
+        const canvas = document.getElementById('wheel-canvas');
+        const ctx = canvas.getContext('2d');
+        const segments = [
+            { text: "50 Coins", weight: 0.25, val: 50 },
+            { text: "70 Coins", weight: 0.20, val: 70 },
+            { text: "90 Coins", weight: 0.15, val: 90 },
+            { text: "100 Coins", weight: 0.15, val: 100 },
+            { text: "120 Coins", weight: 0.10, val: 120 },
+            { text: "140 Coins", weight: 0.08, val: 140 },
+            { text: "150 Coins", weight: 0.05, val: 150 },
+            { text: "Try Again", weight: 0.02, val: 0 }
+        ];
+        
+        function drawWheel() {
+            const numSegs = segments.length;
+            const arc = Math.PI * 2 / numSegs;
+            for (let i = 0; i < numSegs; i++) {
+                ctx.beginPath();
+                ctx.fillStyle = i % 2 === 0 ? '#1E293B' : '#0F172A';
+                ctx.strokeStyle = '#334155';
+                ctx.lineWidth = 2;
+                ctx.moveTo(128, 128);
+                ctx.arc(128, 128, 124, i * arc, (i + 1) * arc);
+                ctx.fill();
+                ctx.stroke();
+                
+                ctx.save();
+                ctx.fillStyle = i % 2 === 0 ? '#0088CC' : '#F8FAFC';
+                ctx.translate(128, 128);
+                ctx.rotate(i * arc + arc / 2);
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillText(segments[i].text, 50, 5);
+                ctx.restore();
+            }
+        }
+        drawWheel();
+
+        function pickWeightedSegment() {
+            let rand = Math.random();
+            for(let i=0; i<segments.length; i++) {
+                if(rand < segments[i].weight) return i;
+                rand -= segments[i].weight;
+            }
+            return 0;
+        }
+
+        let isSpinning = false;
+        document.getElementById('btn-spin-manual').onclick = async function() {
+            if(isSpinning) return;
+            
+            if(state.totalSpins > 0) {
+                const adClear = await AdsgramController.triggerAd();
+                if(!adClear) return;
+            }
+            
+            isSpinning = true;
+            state.totalSpins++;
+            const targetSegIndex = pickWeightedSegment();
+            const segDegrees = 360 / segments.length;
+            const targetRotation = 3600 + (360 - (targetSegIndex * segDegrees)) - (segDegrees / 2);
+            
+            canvas.style.transform = `rotate(${targetRotation}deg)`;
+            
+            setTimeout(() => {
+                isSpinning = false;
+                const result = segments[targetSegIndex];
+                canvas.style.transition = 'none';
+                canvas.style.transform = `rotate(${targetRotation % 360}deg)`;
+                setTimeout(() => canvas.style.transition = 'transform 3s ease-out', 50);
+                
+                presentRewardModal(
+                    result.val > 0 ? "Jackpot Payout Allocation!" : "Empty Core Matrix", 
+                    result.val > 0 ? `Verify transmission sequence to claim ${result.val} 💸 tokens.` : "No direct payout validation detected. Attempt pipeline reset cycle.",
+                    () => {
+                        state.coins += result.val;
+                        updateUIBalances();
+                    }
+                );
+            }, 3000);
+        };
+
+        // SECTION 2: AUTOMATED LOOP SPIN OPERATION LOGIC
+        let autoSpinInterval = null;
+        let sessionAutoEarned = 0;
+        let sessionAutoCount = 0;
+
+        const btnAutoStart = document.getElementById('btn-spin-auto-start');
+        const btnAutoStop = document.getElementById('btn-spin-auto-stop');
+
+        async function triggerSingleAutoCycle() {
+            if (state.autoSpinsRemaining <= 0 || sessionAutoCount >= 100) {
+                stopAutoSpinLoop();
+                return;
+            }
+            const verified = await AdsgramController.triggerAd();
+            if(!verified) {
+                stopAutoSpinLoop();
+                return;
+            }
+            
+            const targetIdx = pickWeightedSegment();
+            const payload = segments[targetIdx].val;
+            
+            state.autoSpinsRemaining--;
+            sessionAutoCount++;
+            sessionAutoEarned += payload;
+            state.coins += payload;
+            
+            document.getElementById('auto-spin-count').innerText = sessionAutoCount;
+            document.getElementById('auto-spin-earned').innerText = `${sessionAutoEarned} 💸`;
+            updateUIBalances();
+        }
+
+        btnAutoStart.onclick = function() {
+            btnAutoStart.classList.add('hidden');
+            btnAutoStop.classList.remove('hidden');
+            autoSpinInterval = setInterval(triggerSingleAutoCycle, 2000);
+        };
+        function stopAutoSpinLoop() {
+            clearInterval(autoSpinInterval);
+            autoSpinInterval = null;
+            btnAutoStop.classList.add('hidden');
+            btnAutoStart.classList.remove('hidden');
+        }
+        btnAutoStop.onclick = stopAutoSpinLoop;
+
+        // SECTION 3: 7-DAY REWARD MATRIX SYNC HOOK
+        const dailyRewards = [10, 20, 30, 50, 70, 90, 100];
+        function renderDailyStreakGrid() {
+            const container = document.getElementById('daily-grid-container');
+            container.innerHTML = "";
+            dailyRewards.forEach((amt, idx) => {
+                const dayNum = idx + 1;
+                let cardStyle = "bg-slate-900 border-slate-800 text-slate-500 opacity-60";
+                let statusBadge = "Locked";
+                
+                if(dayNum === 1 && !state.dailyRewardStatus) {
+                    cardStyle = "bg-indigo-950 border-indigo-500 text-indigo-200 ring-2 ring-indigo-500/20";
+                    statusBadge = "CLAIMABLE";
+                    const claimBtn = document.getElementById('btn-daily-claim');
+                    claimBtn.removeAttribute('disabled');
+                    claimBtn.className = "w-full bg-[#0088CC] text-white font-bold py-2.5 rounded-xl text-sm transition active:scale-95 shadow-md";
+                } else if(dayNum === 1 && state.dailyRewardStatus) {
+                    cardStyle = "bg-emerald-950 border-emerald-500 text-emerald-400";
+                    statusBadge = "Claimed ✅";
+                }
+                
+                container.innerHTML += `
+                    <div class="border rounded-xl p-2 text-center flex flex-col items-center justify-center ${cardStyle}">
+                        <span class="text-[10px] font-bold block mb-1">Day ${dayNum}</span>
+                        <span class="text-md mb-1">💸</span>
+                        <span class="text-xs font-black block">${amt}</span>
+                        <span class="text-[8px] font-bold mt-1 uppercase tracking-tight opacity-80">${statusBadge}</span>
+                    </div>
+                `;
+            });
+        }
+        document.getElementById('btn-daily-claim').onclick = async function() {
+            if(state.dailyRewardStatus) return;
+            const passed = await AdsgramController.triggerAd();
+            if(passed) {
+                state.coins += dailyRewards[0];
+                state.dailyRewardStatus = true;
+                state.lastDailyClaim = new Date().toISOString();
+                renderDailyStreakGrid();
+                updateUIBalances();
+                alert("Daily streak bonus unlocked successfully!");
+            }
+        };
+
+        // ADVANCED GAME PAGE: FRUIT CATCHER ENGINE
+        const gameCanvas = document.getElementById('game-canvas');
+        const gctx = gameCanvas.getContext('2d');
+        let gameLoopId = null;
+        let gameTimeRemaining = 20;
+        let gameScore = 0;
+        let comboCount = 1;
+        let gameActive = false;
+        
+        let basket = { x: 135, w: 50, h: 12, speed: 20 };
+        let gameEntities = [];
+        let spawnTimer = 0;
+
+        function initGameCanvasEngine() {
+            basket.x = gameCanvas.width / 2 - basket.w / 2;
+            gameEntities = [];
+            gctx.fillStyle = "#0F172A";
+            gctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+        }
+
+        document.getElementById('btn-start-game').onclick = async function() {
+            const paymentSuccess = await AdsgramController.triggerAd();
+            if(!paymentSuccess) return;
+            
+            document.getElementById('game-lobby').classList.add('hidden');
+            document.getElementById('game-active-zone').classList.remove('hidden');
+            
+            gameScore = 0;
+            comboCount = 1;
+            gameTimeRemaining = 20;
+            gameEntities = [];
+            gameActive = true;
+            
+            document.getElementById('game-score').innerText = gameScore;
+            document.getElementById('game-timer').innerText = gameTimeRemaining;
+            document.getElementById('game-combo').innerText = comboCount;
+            
+            const timerCountdown = setInterval(() => {
+                gameTimeRemaining--;
+                document.getElementById('game-timer').innerText = gameTimeRemaining;
+                if(gameTimeRemaining <= 0) {
+                    clearInterval(timerCountdown);
+                    terminateGameSession();
+                }
+            }, 1000);
+            
+            runGameLoop();
+        };
+
+        gameCanvas.addEventListener('touchmove', (e) => {
+            if(!gameActive) return;
+            const rect = gameCanvas.getBoundingClientRect();
+            const touchX = e.touches[0].clientX - rect.left;
+            basket.x = (touchX * (gameCanvas.width / rect.width)) - basket.w / 2;
+            if(basket.x < 0) basket.x = 0;
+            if(basket.x > gameCanvas.width - basket.w) basket.x = gameCanvas.width - basket.w;
+        });
+
+        function runGameLoop() {
+            if(!gameActive) return;
+            gctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+            
+            gctx.fillStyle = '#0088CC';
+            gctx.beginPath();
+            gctx.roundRect(basket.x, gameCanvas.height - 20, basket.w, basket.h, 6);
+            gctx.fill();
+            
+            spawnTimer++;
+            if(spawnTimer % 25 === 0) {
+                const isBomb = Math.random() < 0.25;
+                gameEntities.push({
+                    x: Math.random() * (gameCanvas.width - 20) + 10,
+                    y: 0,
+                    radius: 8,
+                    speed: Math.random() * 2 + 3 + (gameScore * 0.05),
+                    isBomb: isBomb,
+                    char: isBomb ? '💣' : ['🍓', '🍌', '🍉', '🍎'][Math.floor(Math.random() * 4)]
+                });
+            }
+            
+            for (let i = gameEntities.length - 1; i >= 0; i--) {
+                let ent = gameEntities[i];
+                ent.y += ent.speed;
+                
+                gctx.font = '16px serif';
+                gctx.fillText(ent.char, ent.x - 8, ent.y + 6);
+                
+                if(ent.y >= gameCanvas.height - 25 && ent.y <= gameCanvas.height - 10 && ent.x >= basket.x && ent.x <= basket.x + basket.w) {
+                    if(ent.isBomb) {
+                        comboCount = 1;
+                        gameScore = Math.max(0, gameScore - 15);
+                    } else {
+                        gameScore += 10 * comboCount;
+                        comboCount++;
+                    }
+                    document.getElementById('game-score').innerText = gameScore;
+                    document.getElementById('game-combo').innerText = comboCount;
+                    gameEntities.splice(i, 1);
+                    continue;
+                }
+                
+                if(ent.y > gameCanvas.height) {
+                    if(!ent.isBomb) comboCount = 1;
+                    document.getElementById('game-combo').innerText = comboCount;
+                    gameEntities.splice(i, 1);
+                }
+            }
+            
+            gameLoopId = requestAnimationFrame(runGameLoop);
+        }
+
+        function terminateGameSession() {
+            gameActive = false;
+            cancelAnimationFrame(gameLoopId);
+            
+            const payoutReward = Math.floor(gameScore * 0.5);
+            state.coins += payoutReward;
+            updateUIBalances();
+            
+            alert(`Session Concluded. Final Score Matrix achieved: ${gameScore}. You earned ${payoutReward} 💸 Coins.`);
+            
+            document.getElementById('game-active-zone').classList.add('hidden');
+            document.getElementById('game-lobby').classList.remove('hidden');
+            initGameCanvasEngine();
+        }
+
+        // TASKS LAYOUT GENERATOR PIPELINE MAPPING
+        function buildStandardTasksLayout() {
+            const targetBox = document.getElementById('standard-tasks-box');
+            targetBox.innerHTML = "";
+            state.standardTasks.forEach(task => {
+                const percentage = Math.min(100, (task.current / task.target) * 100);
+                targetBox.innerHTML += `
+                    <div class="bg-[#1E293B] border border-slate-800 rounded-xl p-4 flex flex-col space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-100">Task Milestone Stream #${task.id}</h4>
+                                <p class="text-[10px] text-slate-400">Watch 25 Ads Token Stream Framework Allocation → <span class="text-cyan-400 font-bold">+50 💎</span></p>
+                            </div>
+                            <span class="text-xs font-mono font-bold text-indigo-400 bg-indigo-950 px-2 py-0.5 border border-indigo-900 rounded">${task.current}/${task.target}</span>
+                        </div>
+                        <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden border border-slate-800">
+                            <div class="bg-gradient-to-r from-cyan-500 to-indigo-500 h-full transition-all duration-300" style="width: ${percentage}%"></div>
+                        </div>
+                        <button onclick="executeTaskWatch(${task.id})" class="w-full bg-slate-800 text-slate-200 border border-slate-700 font-bold py-2 rounded-xl text-xs hover:bg-slate-700 active:scale-98 transition">${task.current >= task.target ? 'CLAIM REWARD' : 'WATCH AD TRANSACTION'}</button>
+                    </div>
+                `;
+            });
+        }
+        
+        window.executeTaskWatch = async function(id) {
+            const match = state.standardTasks.find(t => t.id === id);
+            if(!match) return;
+            if(match.current >= match.target) {
+                state.tickets += 50;
+                match.current = 0;
+                updateUIBalances();
+                buildStandardTasksLayout();
+                alert("Task milestone verified server-side. 50 💎 deposited.");
+                return;
+            }
+            
+            const cleared = await AdsgramController.triggerAd();
+            if(cleared) {
+                match.current++;
+                buildStandardTasksLayout();
+            }
+        };
+
+        // AUTO WATCH ADS CONTEXT HOOK
+        let autoTaskInterval = null;
+        let autoTaskCount = 0;
+        const autoTaskBtnStart = document.getElementById('btn-auto-task-start');
+        const autoTaskBtnStop = document.getElementById('btn-auto-task-stop');
+
+        async function processAutoTaskCycle() {
+            if(autoTaskCount >= 50) {
+                stopAutoTaskEngine();
+                state.tickets += 50;
+                updateUIBalances();
+                alert("Auto processing pipeline sequence finalized successfully.");
+                return;
+            }
+            const pass = await AdsgramController.triggerAd();
+            if(pass) {
+                autoTaskCount++;
+                document.getElementById('auto-task-ratio').innerText = `${autoTaskCount} / 50 Completed`;
+                document.getElementById('auto-task-progress-bar').style.width = `${(autoTaskCount/50)*100}%`;
+            } else {
+                stopAutoTaskEngine();
+            }
+        }
+        autoTaskBtnStart.onclick = function() {
+            autoTaskBtnStart.classList.add('hidden');
+            autoTaskBtnStop.classList.remove('hidden');
+            autoTaskInterval = setInterval(processAutoTaskCycle, 2000);
+        };
+        function stopAutoTaskEngine() {
+            clearInterval(autoTaskInterval);
+            autoTaskInterval = null;
+            autoTaskBtnStop.classList.add('hidden');
+            autoTaskBtnStart.classList.remove('hidden');
+        }
+        autoTaskBtnStop.onclick = stopAutoTaskEngine;
+
+        // WALLET MANAGEMENT SYSTEM MODULE INTERFACE MAPPING
+        const btnWallet = document.getElementById('btn-wallet-connect');
+        const selectWdAmt = document.getElementById('withdraw-amount-select');
+        const btnWdAction = document.getElementById('btn-withdraw-action');
+
+        btnWallet.onclick = function() {
+            state.walletAddress = "EQB...MOCK_TON_ADDRESS_VERIFIED_" + Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('wallet-status').innerText = state.walletAddress;
+            document.getElementById('wallet-status').className = "text-xs font-mono font-bold text-emerald-400 mb-4 break-all bg-slate-900 p-3 rounded-xl border border-slate-800";
+            btnWallet.innerText = "Wallet Connected ✅";
+            btnWallet.classList.add('opacity-50', 'pointer-events-none');
+            
+            btnWdAction.removeAttribute('disabled');
+            btnWdAction.className = "w-full bg-[#0088CC] text-white font-bold py-3 rounded-xl text-sm transition transform active:scale-95 shadow-md";
+            btnWdAction.innerText = "Submit Liquidation Withdrawal";
+        };
+
+        selectWdAmt.onchange = function() {
+            const val = parseInt(selectWdAmt.value);
+            const diaCost = val / 1000;
+            document.getElementById('wd-summary-gold').innerText = `${val.toLocaleString()} 🪙`;
+            document.getElementById('wd-summary-diamonds').innerText = `${diaCost.toLocaleString()} 💎`;
+            document.getElementById('wd-summary-net').innerText = `${(diaCost + 0.05).toFixed(2)} 💎`;
+        };
+
+        btnWdAction.onclick = function() {
+            const goldAmt = parseInt(selectWdAmt.value);
+            const diamondCost = goldAmt / 1000;
+            
+            if(state.gold < goldAmt || state.tickets < diamondCost) {
+                alert("Insufficient core resource balances validation criteria matching rejected.");
+                return;
+            }
+            
+            state.gold -= goldAmt;
+            state.tickets -= diamondCost;
+            
+            const newRecord = {
+                date: new Date().toLocaleDateString(),
+                amount: `${(goldAmt/1000000)}M Gold`,
+                status: "Pending"
+            };
+            state.history.unshift(newRecord);
+            
+            const tableBody = document.getElementById('payment-history-rows');
+            tableBody.innerHTML = "";
+            state.history.slice(0, 10).forEach(item => {
+                tableBody.innerHTML += `
+                    <tr class="border-b border-slate-900"><td class="py-2">${item.date}</td><td>${item.amount}</td><td class="text-amber-400 font-bold">${item.status}</td></tr>
+                `;
+            });
+            
+            updateUIBalances();
+            alert("Withdrawal settlement payload locked into validation queue framework.");
+        };
+
+        // App Initial Launch Sequence Orchestrator
+        switchTab('home');
+        updateUIBalances();
+        renderDailyStreakGrid();
+        buildStandardTasksLayout();
+    </script>
+</body>
+</html>
